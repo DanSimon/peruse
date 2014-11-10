@@ -1,0 +1,12 @@
+[package]
+
+name = "peruse"
+version = "0.1.0"
+authors = [ "Dan Simon <dan@dansimon.info>" ]
+
+[lib]
+
+name = "peruse"
+path = "src/peruse/lib.rs"
+
+
