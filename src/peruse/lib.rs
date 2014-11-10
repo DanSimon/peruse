@@ -7,4 +7,5 @@ extern crate regex;
 
 
 pub mod parsers;
+pub mod macros;
 
