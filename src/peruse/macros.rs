@@ -52,7 +52,10 @@ pub macro_rules! repsep {
       sep: $sep,
       min_reps: $min,
     }
-  }
+  };
+  ($rep: expr, $sep: expr) => {
+    repsep!($rep, $sep, 0)
+  };
 }
 
 #[macro_export]
