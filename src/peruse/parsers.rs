@@ -16,6 +16,12 @@ pub trait Parser<'a, I, O> {
 
 pub type ParseResult<'a, I:'a, O> = Result<(O, I), String>;
 
+//coercion fn needed for unboxed closure macros
+//without this all kinds of weird errors show up
+pub fn coerce<'a, I, O>(l: Box<Parser<'a, I, O> + 'a>) -> Box<Parser<'a, I, O> + 'a> {
+  l
+}
+
 pub fn literal<'a, T:'a + Eq + Clone>(literal: T) -> Box<Parser<'a, &'a[T], T> + 'a> {
   box LiteralParser{literal: literal}
 }

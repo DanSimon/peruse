@@ -1,22 +1,17 @@
 
 use parsers::*;
 
-//coercion fn needed for unboxed closures
-//without this all kinds of weird errors show up
-pub fn _p<'a, I, O>(l: Box<Parser<'a, I, O> + 'a>) -> Box<Parser<'a, I, O> + 'a> {
-  l
-}
 
 #[macro_export]
 macro_rules! or {
   ($a: expr, $b: expr) => {
-    _p(box OrParser{
+    coerce(box OrParser{
       a: box |&:| $a ,
       b: box |&:| $b ,
     }) 
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
-    _p(box OrParser{
+    coerce(box OrParser{
       a: box |&:| $a,
       b: box |&:| or!($b, $($c),*),
     }) 
