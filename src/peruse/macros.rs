@@ -66,3 +66,12 @@ pub macro_rules! rep {
     }
   }
 }
+
+#[macro_export]
+pub macro_rules! opt {
+  ($rep: expr) => {
+    box OptionParser{
+      parser: $rep,
+    }
+  }
+}

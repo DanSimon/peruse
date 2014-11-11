@@ -46,4 +46,12 @@ fn test_repsep() {
   let expected = Ok((vec![A, C, A], input.slice_from(5)));
   assert_eq!( parser.parse(&input), expected );
 }
+
+#[test]
+fn test_opt() {
+  let input = [A, A, B];
+  let parser = rep!(seq!(literal(A), opt!(literal(B))));
+  let expected = Ok((vec![(A, None), (A, Some(B))], input.slice_from(3)));
+  assert_eq!( parser.parse(&input), expected );
+}
     
