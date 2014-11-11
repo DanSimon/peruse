@@ -10,7 +10,7 @@ out too well, mostly because of the lazy-evaluated `OrParser`.  But the input
 data itself is (usually) never boxed or copied, so I don't think it's a big
 deal for now.
 
-The [tests](src/tests.rs) have some basic examples of how to use the combinators.  You don't
+The [tests](src/peruse/tests.rs) have some basic examples of how to use the combinators.  You don't
 have to use the macros, but without them it gets pretty ugly.
 
 For a sorta real-world example, check out
