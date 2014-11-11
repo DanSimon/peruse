@@ -8,13 +8,13 @@ macro_rules! or {
     coerce(box OrParser{
       a: box |&:| $a ,
       b: box |&:| $b ,
-    }) 
+    })
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
     coerce(box OrParser{
       a: box |&:| $a,
       b: box |&:| or!($b, $($c),*),
-    }) 
+    })
   };
 }
 
@@ -24,13 +24,13 @@ pub macro_rules! seq {
     box DualParser{
       first: $a,
       second: $b,
-    } 
+    }
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
     box DualParser{
       first: $a,
       second: seq!($b, $($c),* ),
-    } 
+    }
   };
 }
 
