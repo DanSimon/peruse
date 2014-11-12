@@ -161,21 +161,31 @@ impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)
   }
 }
 
+//memoization coming sooooon
+pub struct LazyParser<'a, I, O> {
+  pub generator: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>
+}
+impl<'a, I, O> Parser<'a, I, O> for LazyParser<'a, I, O> {
+  fn parse(&self, input: I) -> ParseResult<'a, I, O> {
+    self.generator.call(()).parse(input)
+  }
+}
+
 /// A parser that will attempt to parse using parser `a`, and then `b` if
 /// the first fails.  The contained parsers are lazy so that we can support recursive
 /// grammars.
 ///
 /// In general, the "greedier" parser should be `a`.
 pub struct OrParser<'a, I, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> {
-  pub a: &'a Fn<(), A> + 'a,
-  pub b: &'a Fn<(), B> + 'a
+  pub a: A,
+  pub b: B,
 }
 
 impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O> for OrParser<'a, I, O, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, O> {
-    match self.a.call(()).parse(data.clone()) {
+    match self.a.parse(data.clone()) {
       Ok((a, d2)) => Ok((a, d2)),
-      Err(_) => match self.b.call(()).parse(data.clone()) {
+      Err(_) => match self.b.parse(data.clone()) {
         Ok((b, remain)) => Ok((b, remain)),
         Err(err) => Err(err)
       }
@@ -186,7 +196,7 @@ impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O>
 /// A Parser that can map the successful result of a parser to another type
 pub struct MapParser<'a, I, O, U, P: Parser<'a, I, O>> {
   pub parser: P,
-  pub mapper: &'a Fn<(O,), U> + 'a, //this has to be a &Fn and not a regular lambda since it must be immutable
+  pub mapper: Box<Fn<(O,), U> + 'a>, //this has to be a &Fn and not a regular lambda since it must be immutable
 }
 impl<'a, I, O, U, P: Parser<'a, I, O>> Parser<'a, I, U> for MapParser<'a, I, O, U, P> {
   fn parse(&self, data: I) -> ParseResult<'a, I, U> {

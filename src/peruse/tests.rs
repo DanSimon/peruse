@@ -40,6 +40,29 @@ fn test_or() {
 }
 
 #[test]
+fn test_map() {
+  let input = [A];
+  let parser = map!(literal(A), |&: a| 5u);
+  let expected = Ok( (5u, [].as_slice()) );
+  assert_eq!( parser.parse(&input), expected );
+}
+
+#[test]
+fn test_recursive_or() {
+  let input = [A, A, C];
+  fn a_seq<'a>() -> Box<Parser<'a, &'a [Input], uint> + 'a> {
+    box or!(
+      map!(literal(C), |&: _| 2u),
+      map!(seq!(literal(A), lazy!(a_seq())), |&: (a, seq)| 1u + seq)
+    )
+  }
+  let parser = a_seq();
+  let expected = Ok( (4u, [].as_slice()) );
+  assert_eq!( parser.parse(&input), expected );
+
+}
+
+#[test]
 fn test_repsep() {
   let input = [A, B, C, B, A, A];
   let parser = repsep!(or!(literal(A), literal(C)) , literal(B));

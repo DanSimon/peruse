@@ -6,14 +6,14 @@ use parsers::*;
 macro_rules! or {
   ($a: expr, $b: expr) => {
     OrParser{
-      a: &|&:| $a,
-      b: &|&:| $b,
+      a: $a,
+      b: $b,
     } 
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
     OrParser{
-      a: &|&:| $a,
-      b: &|&:| or!($b, $($c),*),
+      a: $a,
+      b: &or!($b, $($c),*),
     } 
   };
 }
@@ -39,7 +39,7 @@ pub macro_rules! map {
   ($a: expr, $b: expr) => {
     MapParser{
       parser: $a,
-      mapper: $b
+      mapper: box $b
     }
   }
 }
@@ -72,6 +72,15 @@ pub macro_rules! opt {
   ($rep: expr) => {
     OptionParser{
       parser: $rep,
+    }
+  }
+}
+
+#[macro_export]
+pub macro_rules! lazy {
+  ($rep: expr) => {
+    LazyParser{
+      generator: box |&:| $rep
     }
   }
 }
