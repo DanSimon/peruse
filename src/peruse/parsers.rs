@@ -22,8 +22,8 @@ pub fn coerce<'a, I, O>(l: Box<Parser<'a, I, O> + 'a>) -> Box<Parser<'a, I, O> +
   l
 }
 
-pub fn literal<'a, T:'a + Eq + Clone>(literal: T) -> Box<Parser<'a, &'a[T], T> + 'a> {
-  box LiteralParser{literal: literal}
+pub fn literal<'a, T:'a + Eq + Clone>(literal: T) -> LiteralParser<'a, T>{
+  LiteralParser{literal: literal}
 }
 
 
@@ -105,7 +105,7 @@ impl<'a, I: Clone, O> Parser<'a, &'a [I], O> for MatchParser<'a, I, O> {
  * error.  The accumulated results are returned.
  */
 pub struct RepParser<'a, I, O>{
-  pub parser: Box<Parser<'a, I, O> + 'a>
+  pub parser: &'a Parser<'a, I, O> + 'a
 }
 
 impl<'a, I: Clone, O> Parser<'a, I, Vec<O>> for RepParser<'a, I, O> {
@@ -132,8 +132,8 @@ impl<'a, I: Clone, O> Parser<'a, I, Vec<O>> for RepParser<'a, I, O> {
  * returns an error at any time, the error is escelated.
  */
 pub struct RepSepParser<'a, I, O, U> {
-  pub rep: Box<Parser<'a, I, O> + 'a>,
-  pub sep: Box<Parser<'a, I, U> + 'a>,
+  pub rep: &'a Parser<'a, I, O> + 'a,
+  pub sep: &'a Parser<'a, I, U> + 'a,
   pub min_reps: uint,
 }
 impl<'a, I: Clone, O, U> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U> {
@@ -174,8 +174,8 @@ impl<'a, I: Clone, O, U> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U> {
  * not returned)
  */
 pub struct DualParser<'a, I, A, B> {
-  pub first: Box<Parser<'a, I, A> + 'a>,
-  pub second: Box<Parser<'a, I, B> + 'a>
+  pub first: &'a Parser<'a, I, A> + 'a,
+  pub second: &'a Parser<'a, I, B> + 'a,
 }
 
 impl <'a, I, A, B> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B> {
@@ -215,30 +215,12 @@ impl<'a, I: Clone, O> Parser<'a, I, O> for OrParser<'a, I, O> {
   }
 }
 
-//this parser doesn't work yet, seems to be some weirdness when trying to put unboxed closures in a vector
-
-pub struct OneOfParser<'a, I, O> {
-  parsers: Vec<Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a> + 'a>
-}
-
-impl<'a, I: Clone, O> Parser<'a, I, O> for OneOfParser<'a, I, O> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, O> {
-    for p in self.parsers.iter() {
-      let res = p.call(()).parse(data.clone());
-      if res.is_ok() {
-        return res;
-      }
-    }
-    Err(format!("All options failed"))
-  }
-}
-
 /*
  * A Parser that can map the successful result of a parser to another type
  */
 pub struct MapParser<'a, I, O, U> {
-  pub parser: Box<Parser<'a, I, O> + 'a>,
-  pub mapper: Box<Fn<(O,), U> +'a>, //this has to be a &Fn and not a regular lambda since it must be immutable
+  pub parser: &'a Parser<'a, I, O> + 'a,
+  pub mapper: &'a Fn<(O,), U> + 'a, //this has to be a &Fn and not a regular lambda since it must be immutable
 }
 impl<'a, I, O, U> Parser<'a, I, U> for MapParser<'a, I, O, U> {
   fn parse(&self, data: I) -> ParseResult<'a, I, U> {
@@ -250,7 +232,7 @@ impl<'a, I, O, U> Parser<'a, I, U> for MapParser<'a, I, O, U> {
  * A Parser that will attempt to use a parser, returning an option of the contained parser's result
  */
 pub struct OptionParser<'a, I, O> {
-  pub parser: Box<Parser<'a, I, O> + 'a>
+  pub parser: &'a Parser<'a, I, O> + 'a
 }
 impl<'a, I: Clone, O> Parser<'a, I, Option<O>> for OptionParser<'a, I, O> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Option<O>> {

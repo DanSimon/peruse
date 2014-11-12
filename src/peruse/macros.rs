@@ -5,31 +5,31 @@ use parsers::*;
 #[macro_export]
 macro_rules! or {
   ($a: expr, $b: expr) => {
-    coerce(box OrParser{
-      a: box |&:| $a ,
-      b: box |&:| $b ,
-    }) 
+    OrParser{
+      a: box |&:| coerce(box $a) ,
+      b: box |&:| coerce(box $b) ,
+    } 
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
-    coerce(box OrParser{
-      a: box |&:| $a,
-      b: box |&:| or!($b, $($c),*),
-    }) 
+    OrParser{
+      a: box |&:| coerce(box $a),
+      b: box |&:| coerce(box or!($b, $($c),*)),
+    } 
   };
 }
 
 #[macro_export]
 pub macro_rules! seq {
   ($a: expr, $b: expr ) => {
-    box DualParser{
-      first: $a,
-      second: $b,
+    DualParser{
+      first: &$a,
+      second: &$b,
     } 
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
-    box DualParser{
-      first: $a,
-      second: seq!($b, $($c),* ),
+    DualParser{
+      first: &$a,
+      second: &seq!($b, $($c),* ),
     } 
   };
 }
@@ -37,9 +37,9 @@ pub macro_rules! seq {
 #[macro_export]
 pub macro_rules! map {
   ($a: expr, $b: expr) => {
-    box MapParser{
-      parser: $a,
-      mapper: box $b
+    MapParser{
+      parser: &$a,
+      mapper: $b
     }
   }
 }
@@ -47,9 +47,9 @@ pub macro_rules! map {
 #[macro_export]
 pub macro_rules! repsep {
   ($rep: expr, $sep: expr, $min: expr) => {
-    box RepSepParser{
-      rep: $rep,
-      sep: $sep,
+    RepSepParser{
+      rep: &$rep,
+      sep: &$sep,
       min_reps: $min,
     }
   };
@@ -61,8 +61,8 @@ pub macro_rules! repsep {
 #[macro_export]
 pub macro_rules! rep {
   ($rep: expr) => {
-    box RepParser{
-      parser: $rep,
+    RepParser{
+      parser: &$rep,
     }
   }
 }
@@ -70,8 +70,8 @@ pub macro_rules! rep {
 #[macro_export]
 pub macro_rules! opt {
   ($rep: expr) => {
-    box OptionParser{
-      parser: $rep,
+    OptionParser{
+      parser: &$rep,
     }
   }
 }
