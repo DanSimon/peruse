@@ -2,12 +2,10 @@
 use std::ops::Fn;
 use regex::{Captures, Regex};
 
-/*
- * A Parser is designed to take an input type and turn part of it into an
- * output type.  Probably in every real-life scenario, the input type is a
- * slice of some type.  Thus a parser returns an output type along with another
- * input type, which for slices would be the rest of the data.
- */
+/// A Parser is designed to take an input type and turn part of it into an
+/// output type.  Probably in every real-life scenario, the input type is a
+/// slice of some type.  Thus a parser returns an output type along with another
+/// input type, which for slices would be the rest of the data.
 pub trait Parser<'a, I, O> {
 
   fn parse(&self, data: I) -> ParseResult<'a, I, O>;
@@ -21,10 +19,8 @@ pub fn literal<'a, T:'a + Eq + Clone>(literal: T) -> LiteralParser<'a, T>{
 }
 
 
-/*
- * a parser that consumes one item in a slice and only returns ok if it equals
- * the given literal
- */
+/// A parser that consumes one item in a slice and only returns ok if it equals
+/// the given literal
 pub struct LiteralParser<'a, T:'a + Eq + Clone> {
   pub literal: T,
 }
@@ -42,9 +38,7 @@ impl<'a, T: 'a + Eq + Clone> Parser<'a,  &'a [T], T> for LiteralParser<'a, T> {
   }
 }
 
-/*
- * A string Parser that attempts to consume the given regex
- */
+/// A string Parser that attempts to consume the given regex
 pub struct RegexLiteralParser<'a> {
   pub regex: Regex,
 }
@@ -70,13 +64,7 @@ impl<'a> Parser<'a, &'a str, Captures<'a>> for RegexCapturesParser<'a> {
   }
 }
 
-
-
-
-
-/*
- * A slice Parser that matches against the first item in the slice
- */
+/// A slice Parser that matches against the first item in the slice
 pub struct MatchParser<'a, I, O> {
   pub matcher: Box< Fn<(&'a I,), Result<O, String>> +'a>
 }
@@ -90,12 +78,8 @@ impl<'a, I: Clone, O> Parser<'a, &'a [I], O> for MatchParser<'a, I, O> {
   }
 }
 
-    
-
-/*
- * A Parser that will keep repeating the given parser until it returns an
- * error.  The accumulated results are returned.
- */
+/// A Parser that will keep repeating the given parser until it returns an
+/// error.  The accumulated results are returned.
 pub struct RepParser<'a, I, O, P: Parser<'a, I, O>>{
   pub parser: P
 }
@@ -118,11 +102,9 @@ impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Vec<O>> for RepParser<'
   }
 }
 
-/*
- * A Parser that will repeatedly parse `rep` and `sep` in sequence until `sep`
- * returns an error.  The accumulated `rep` results are returned.  If `rep`
- * returns an error at any time, the error is escelated.
- */
+/// A Parser that will repeatedly parse `rep` and `sep` in sequence until `sep`
+/// returns an error.  The accumulated `rep` results are returned.  If `rep`
+/// returns an error at any time, the error is escelated.
 pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
   pub rep: A,
   pub sep: B,
@@ -131,7 +113,7 @@ pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
 impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
     let mut remain = data;
-    let mut v: Vec<O> = Vec::new();    
+    let mut v: Vec<O> = Vec::new();
     loop {
       match self.rep.parse(remain) {
         Ok((result, rest)) => {
@@ -144,7 +126,7 @@ impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I,
               if v.len() < self.min_reps {
                 return Err(format!("Not enough reps: required {}, got {}", self.min_reps, v.len()))
               } else {
-                return Ok((v, rest)) 
+                return Ok((v, rest))
               }
             }
           }
@@ -157,21 +139,17 @@ impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I,
     unreachable!()
   }
 }
-  
 
 
-/*
- * A Parser that will combine two parsers into a tuple of results.  If either
- * parser returns an error, the error is escelated (ie partial successes are
- * not returned)
- */
+/// A Parser that will combine two parsers into a tuple of results.  If either
+/// parser returns an error, the error is escelated (ie partial successes are
+/// not returned)
 pub struct DualParser<'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> {
   pub first: X,
   pub second: Y,
 }
 
 impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B, X, Y> {
-  
   fn parse(&self, data: I) -> ParseResult<'a, I, (A, B)> {
     match self.first.parse(data) {
       Ok((a, d2)) => match self.second.parse(d2) {
@@ -183,13 +161,11 @@ impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)
   }
 }
 
-/*
- * A parser that will attempt to parse using parser `a`, and then `b` if
- * the first fails.  The contained parsers are lazy so that we can support recursive
- * grammars.
- *
- * In general, the "greedier" parser should be `a`.
- */
+/// A parser that will attempt to parse using parser `a`, and then `b` if
+/// the first fails.  The contained parsers are lazy so that we can support recursive
+/// grammars.
+///
+/// In general, the "greedier" parser should be `a`.
 pub struct OrParser<'a, I, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> {
   pub a: &'a Fn<(), A> + 'a,
   pub b: &'a Fn<(), B> + 'a
@@ -207,9 +183,7 @@ impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O>
   }
 }
 
-/*
- * A Parser that can map the successful result of a parser to another type
- */
+/// A Parser that can map the successful result of a parser to another type
 pub struct MapParser<'a, I, O, U, P: Parser<'a, I, O>> {
   pub parser: P,
   pub mapper: &'a Fn<(O,), U> + 'a, //this has to be a &Fn and not a regular lambda since it must be immutable
@@ -220,9 +194,7 @@ impl<'a, I, O, U, P: Parser<'a, I, O>> Parser<'a, I, U> for MapParser<'a, I, O, 
   }
 }
 
-/*
- * A Parser that will attempt to use a parser, returning an option of the contained parser's result
- */
+/// A Parser that will attempt to use a parser, returning an option of the contained parser's result
 pub struct OptionParser<'a, I, O, P: Parser<'a, I, O>> {
   pub parser: P 
 }
@@ -235,4 +207,3 @@ impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Option<O>> for OptionPa
   }
 }
 
-      

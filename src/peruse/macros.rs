@@ -24,13 +24,13 @@ pub macro_rules! seq {
     DualParser{
       first: $a,
       second: $b,
-    } 
+    }
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
     DualParser{
       first: $a,
       second: seq!($b, $($c),* ),
-    } 
+    }
   };
 }
 
