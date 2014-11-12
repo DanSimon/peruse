@@ -104,11 +104,11 @@ impl<'a, I: Clone, O> Parser<'a, &'a [I], O> for MatchParser<'a, I, O> {
  * A Parser that will keep repeating the given parser until it returns an
  * error.  The accumulated results are returned.
  */
-pub struct RepParser<'a, I, O>{
-  pub parser: &'a Parser<'a, I, O> + 'a
+pub struct RepParser<'a, I, O, P: Parser<'a, I, O>>{
+  pub parser: P
 }
 
-impl<'a, I: Clone, O> Parser<'a, I, Vec<O>> for RepParser<'a, I, O> {
+impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Vec<O>> for RepParser<'a, I, O, P> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
     let mut remain = data;
     let mut v: Vec<O> = Vec::new();
@@ -131,12 +131,12 @@ impl<'a, I: Clone, O> Parser<'a, I, Vec<O>> for RepParser<'a, I, O> {
  * returns an error.  The accumulated `rep` results are returned.  If `rep`
  * returns an error at any time, the error is escelated.
  */
-pub struct RepSepParser<'a, I, O, U> {
-  pub rep: &'a Parser<'a, I, O> + 'a,
-  pub sep: &'a Parser<'a, I, U> + 'a,
+pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
+  pub rep: A,
+  pub sep: B,
   pub min_reps: uint,
 }
-impl<'a, I: Clone, O, U> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U> {
+impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
     let mut remain = data;
     let mut v: Vec<O> = Vec::new();    
@@ -173,12 +173,12 @@ impl<'a, I: Clone, O, U> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U> {
  * parser returns an error, the error is escelated (ie partial successes are
  * not returned)
  */
-pub struct DualParser<'a, I, A, B> {
-  pub first: &'a Parser<'a, I, A> + 'a,
-  pub second: &'a Parser<'a, I, B> + 'a,
+pub struct DualParser<'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> {
+  pub first: X,
+  pub second: Y,
 }
 
-impl <'a, I, A, B> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B> {
+impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B, X, Y> {
   
   fn parse(&self, data: I) -> ParseResult<'a, I, (A, B)> {
     match self.first.parse(data) {
@@ -198,12 +198,12 @@ impl <'a, I, A, B> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B> {
  *
  * In general, the "greedier" parser should be `a`.
  */
-pub struct OrParser<'a, I, O> {
-  pub a: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>,
-  pub b: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>
+pub struct OrParser<'a, I, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> {
+  pub a: &'a Fn<(), A> + 'a,
+  pub b: &'a Fn<(), B> + 'a
 }
 
-impl<'a, I: Clone, O> Parser<'a, I, O> for OrParser<'a, I, O> {
+impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O> for OrParser<'a, I, O, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, O> {
     match self.a.call(()).parse(data.clone()) {
       Ok((a, d2)) => Ok((a, d2)),
@@ -218,11 +218,11 @@ impl<'a, I: Clone, O> Parser<'a, I, O> for OrParser<'a, I, O> {
 /*
  * A Parser that can map the successful result of a parser to another type
  */
-pub struct MapParser<'a, I, O, U> {
-  pub parser: &'a Parser<'a, I, O> + 'a,
+pub struct MapParser<'a, I, O, U, P: Parser<'a, I, O>> {
+  pub parser: P,
   pub mapper: &'a Fn<(O,), U> + 'a, //this has to be a &Fn and not a regular lambda since it must be immutable
 }
-impl<'a, I, O, U> Parser<'a, I, U> for MapParser<'a, I, O, U> {
+impl<'a, I, O, U, P: Parser<'a, I, O>> Parser<'a, I, U> for MapParser<'a, I, O, U, P> {
   fn parse(&self, data: I) -> ParseResult<'a, I, U> {
     self.parser.parse(data).map(|(output, input)| ((self.mapper.call((output,)), input)))
   }
@@ -231,10 +231,10 @@ impl<'a, I, O, U> Parser<'a, I, U> for MapParser<'a, I, O, U> {
 /*
  * A Parser that will attempt to use a parser, returning an option of the contained parser's result
  */
-pub struct OptionParser<'a, I, O> {
-  pub parser: &'a Parser<'a, I, O> + 'a
+pub struct OptionParser<'a, I, O, P: Parser<'a, I, O>> {
+  pub parser: P 
 }
-impl<'a, I: Clone, O> Parser<'a, I, Option<O>> for OptionParser<'a, I, O> {
+impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Option<O>> for OptionParser<'a, I, O, P> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Option<O>> {
     match self.parser.parse(data.clone()) {
       Ok((result, rest))  => Ok((Some(result), rest)),
