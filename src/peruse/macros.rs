@@ -13,7 +13,7 @@ macro_rules! or {
   ($a: expr, $b: expr $(, $c: expr)* ) => {
     OrParser{
       a: $a,
-      b: &or!($b, $($c),*),
+      b: or!($b, $($c),*),
     } 
   };
 }

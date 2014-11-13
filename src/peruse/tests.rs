@@ -40,6 +40,14 @@ fn test_or() {
 }
 
 #[test]
+fn test_multi_or() {
+  let input = [A];
+  let parser = or!(literal(A), literal(B), literal(C));
+  let expected = Ok( (A, [].as_slice()) );
+  assert_eq!( parser.parse(&input), expected );
+}
+
+#[test]
 fn test_map() {
   let input = [A];
   let parser = map!(literal(A), |&: a| 5u);
