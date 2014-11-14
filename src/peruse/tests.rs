@@ -17,6 +17,13 @@ fn test_seq() {
   assert_eq!( parser.parse(&input) , Ok(((A, (B, C)), input.slice_from(3))));
 }
 
+fn test_seq_map() {
+  let input = [A, B];
+  let parser = seq!(literal(A), literal(B) to |&: (a, b)| 5u);
+  let expected = Ok( (5u, [].as_slice()) );
+  assert_eq!( parser.parse(&input), expected );
+}
+
 #[test]
 fn test_rep() {
   let input = [A, B, A, B, A, C];
@@ -44,6 +51,14 @@ fn test_multi_or() {
   let input = [A];
   let parser = or!(literal(A), literal(B), literal(C));
   let expected = Ok( (A, [].as_slice()) );
+  assert_eq!( parser.parse(&input), expected );
+}
+
+#[test]
+fn test_or_map() {
+  let input = [B];
+  let parser = or!(literal(A), literal(B) to |&: x| 5u);
+  let expected = Ok( (5u, [].as_slice()) );
   assert_eq!( parser.parse(&input), expected );
 }
 

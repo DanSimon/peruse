@@ -1,6 +1,15 @@
 
 use parsers::*;
 
+#[macro_export]
+pub macro_rules! map {
+  ($a: expr, $b: expr) => {
+    MapParser{
+      parser: $a,
+      mapper: box $b
+    }
+  }
+}
 
 #[macro_export]
 macro_rules! or {
@@ -16,6 +25,10 @@ macro_rules! or {
       b: or!($b, $($c),*),
     } 
   };
+  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+    map!(or!($a, $($b),+), $mapper)
+  }
+
 }
 
 #[macro_export]
@@ -32,17 +45,11 @@ pub macro_rules! seq {
       second: seq!($b, $($c),* ),
     }
   };
-}
-
-#[macro_export]
-pub macro_rules! map {
-  ($a: expr, $b: expr) => {
-    MapParser{
-      parser: $a,
-      mapper: box $b
-    }
+  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+    map!(seq!($a, $($b),+), $mapper)
   }
 }
+
 
 #[macro_export]
 pub macro_rules! repsep {
