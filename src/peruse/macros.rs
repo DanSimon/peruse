@@ -87,7 +87,8 @@ pub macro_rules! opt {
 pub macro_rules! lazy {
   ($rep: expr) => {
     LazyParser{
-      generator: box |&:| $rep
+      generator: box |&:| $rep,
+      generated: None
     }
   }
 }

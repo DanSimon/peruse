@@ -8,7 +8,7 @@ use regex::{Captures, Regex};
 /// input type, which for slices would be the rest of the data.
 pub trait Parser<'a, I, O> {
 
-  fn parse(&self, data: I) -> ParseResult<'a, I, O>;
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, O>;
 
 }
 
@@ -26,7 +26,7 @@ pub struct LiteralParser<'a, T:'a + Eq + Clone> {
 }
 
 impl<'a, T: 'a + Eq + Clone> Parser<'a,  &'a [T], T> for LiteralParser<'a, T> {
-  fn parse(&self, data: &'a[T]) -> ParseResult<'a, &'a[T], T> {
+  fn parse(&mut self, data: &'a[T]) -> ParseResult<'a, &'a[T], T> {
     if data.len() < 1 {
       return Err(format!("ran out of data"))
     }
@@ -44,7 +44,7 @@ pub struct RegexLiteralParser<'a> {
 }
 
 impl<'a> Parser<'a, &'a str, ()> for RegexLiteralParser<'a> {
-  fn parse(&self, data: &'a str) -> ParseResult<'a, &'a str, ()> {
+  fn parse(&mut self, data: &'a str) -> ParseResult<'a, &'a str, ()> {
     self.regex.find(data).map(|(_, e)| ((), data.slice_from(e))).ok_or(format!("regex literal match fail"))
   }
 }
@@ -53,7 +53,7 @@ pub struct RegexCapturesParser<'a> {
   pub regex: Regex,
 }
 impl<'a> Parser<'a, &'a str, Captures<'a>> for RegexCapturesParser<'a> {
-  fn parse(&self, data: &'a str) -> ParseResult<'a, &'a str, Captures<'a>> {
+  fn parse(&mut self, data: &'a str) -> ParseResult<'a, &'a str, Captures<'a>> {
     match self.regex.captures(data) {
       Some(caps) => match caps.pos(0) {
         Some((_, e)) => Ok((caps, data.slice_from(e))),
@@ -69,7 +69,7 @@ pub struct MatchParser<'a, I, O> {
   pub matcher: Box< Fn<(&'a I,), Result<O, String>> +'a>
 }
 impl<'a, I: Clone, O> Parser<'a, &'a [I], O> for MatchParser<'a, I, O> {
-  fn parse(&self, data: &'a[I]) -> ParseResult<'a, &'a[I], O> {
+  fn parse(&mut self, data: &'a[I]) -> ParseResult<'a, &'a[I], O> {
     if data.len() < 1 {
       Err(format!("Unexpected End!"))
     } else {
@@ -85,7 +85,7 @@ pub struct RepParser<'a, I, O, P: Parser<'a, I, O>>{
 }
 
 impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Vec<O>> for RepParser<'a, I, O, P> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, Vec<O>> {
     let mut remain = data;
     let mut v: Vec<O> = Vec::new();
     loop {
@@ -111,7 +111,7 @@ pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
   pub min_reps: uint,
 }
 impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U, A, B> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, Vec<O>> {
     let mut remain = data;
     let mut v: Vec<O> = Vec::new();
     loop {
@@ -150,7 +150,7 @@ pub struct DualParser<'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> {
 }
 
 impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)> for DualParser<'a, I, A, B, X, Y> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, (A, B)> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, (A, B)> {
     match self.first.parse(data) {
       Ok((a, d2)) => match self.second.parse(d2) {
         Ok((b, remain)) => Ok(((a, b), remain)),
@@ -163,11 +163,30 @@ impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)
 
 //memoization coming sooooon
 pub struct LazyParser<'a, I, O> {
-  pub generator: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>
+  pub generator: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>,
+  pub generated: Option<Box<Parser<'a, I, O> + 'a>>
 }
 impl<'a, I, O> Parser<'a, I, O> for LazyParser<'a, I, O> {
-  fn parse(&self, input: I) -> ParseResult<'a, I, O> {
-    self.generator.call(()).parse(input)
+  fn parse(&mut self, input: I) -> ParseResult<'a, I, O> {
+    match self.generated {
+      Some(ref mut p) => p.parse(input),
+      None => {
+        let mut p = self.generator.call(());
+        let res = p.parse(input);
+        self.generated = Some(p);
+        res
+      }
+    }
+    /*
+    if (self.generated.is_some()) {
+      self.generated.map(|p| p.parse(input)).unwrap()
+    } else {
+      let mut p = self.generator.call(());
+      let res = p.parse(input);
+      self.generated = Some(p);
+      res
+    }
+    */
   }
 }
 
@@ -182,7 +201,7 @@ pub struct OrParser<'a, I, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> {
 }
 
 impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O> for OrParser<'a, I, O, A, B> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, O> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, O> {
     match self.a.parse(data.clone()) {
       Ok((a, d2)) => Ok((a, d2)),
       Err(_) => match self.b.parse(data.clone()) {
@@ -199,7 +218,7 @@ pub struct MapParser<'a, I, O, U, P: Parser<'a, I, O>> {
   pub mapper: Box<Fn<(O,), U> + 'a>, //this has to be a &Fn and not a regular lambda since it must be immutable
 }
 impl<'a, I, O, U, P: Parser<'a, I, O>> Parser<'a, I, U> for MapParser<'a, I, O, U, P> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, U> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, U> {
     self.parser.parse(data).map(|(output, input)| ((self.mapper.call((output,)), input)))
   }
 }
@@ -209,7 +228,7 @@ pub struct OptionParser<'a, I, O, P: Parser<'a, I, O>> {
   pub parser: P 
 }
 impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Option<O>> for OptionParser<'a, I, O, P> {
-  fn parse(&self, data: I) -> ParseResult<'a, I, Option<O>> {
+  fn parse(&mut self, data: I) -> ParseResult<'a, I, Option<O>> {
     match self.parser.parse(data.clone()) {
       Ok((result, rest))  => Ok((Some(result), rest)),
       Err(_)              => Ok((None, data)),
