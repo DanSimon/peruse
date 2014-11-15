@@ -58,6 +58,41 @@ The parsers themselves are just some boxed structs implementing a trait, but it'
 * **repsep!(rep, sep)** - repeatedly parse `rep` and then `sep` until `sep` fails, accumulating the results from `rep` into a vector
 * **map!(p, closure)**  - map the result from p using an unboxed closure
 
+## Recursive Grammars
+
+Implementing a recursive grammar currently requires a little more overhead.
+The only real way to implement a recursive parser is to wrap it in a function.
+And since Rust does not allow type inference on function return values, the
+only sane way to write such functions is to box the result so the return type
+is just `Parser<'a, Foo, Bar>` and not `OrParser<'a, OrParser<'a, OrParser<'a,
+DualParser<'a, Foo, Bar.....` (of course, you can try avoiding the boxing, but the types get really gnarly).
+
+The `lazy!` macro can wrap such a function.  Here's an example implementing addition expressions with parentheses (let's pretend addition isn't associative):
+
+```rust
+enum Token {
+  OpenParen,
+  CloseParen,
+  PlusSign,
+  Number(uint),
+}
+
+enum AST {
+  Plus(AST, AST),
+  Addend(uint),
+}
+
+fn expr<'a>() -> Parser<'a, Token, AST> {
+  box or!(
+    matcher!(Token: Number(i) => Addend(i)),
+    seq!(literal(OpenParen), lazy!(expr), literal(CloseParen) to |&: (_, (expr, _))| expr),
+    seq!(lazy!(expr()), PlusSign, lazy!(expr()) to |&: (lhs, (_, rhs))| Plus(lhs, rhs)),
+  )
+}
+```
+
+### More Examples
+
 The [tests](src/peruse/tests.rs) have some basic examples of how to use the combinators.  You don't
 have to use the macros, but without them it gets pretty ugly.
 

@@ -100,4 +100,14 @@ fn test_opt() {
   let expected = Ok((vec![(A, None), (A, Some(B))], input.slice_from(3)));
   assert_eq!( parser.parse(&input), expected );
 }
+
+#[test]
+fn test_matcher() {
+  let input = [A, B, C];
+  let parser = rep!(matcher!(Input : A => 4u, B => 5u));
+  let expected = Ok( (vec![4u, 5u], input.slice_from(2)) );
+  assert_eq!( parser.parse(&input), expected );
+
+}
+  
     

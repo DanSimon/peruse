@@ -91,3 +91,17 @@ pub macro_rules! lazy {
     }
   }
 }
+
+#[macro_export]
+pub macro_rules! matcher {
+  ($t: ty : $($m: pat => $map: expr),+) => {
+    MatchParser{
+      matcher: box |&: i: &$t| match *i {
+        $(
+        $m => Ok($map),
+        )+
+        other => Err(format!("Match error"))
+      }
+    }
+  }
+}
