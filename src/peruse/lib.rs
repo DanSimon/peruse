@@ -13,3 +13,7 @@ pub mod macros;
 
 mod tests;
 
+mod peruse {
+    pub use parsers;
+}
+

@@ -1,10 +1,9 @@
 
-use parsers::*;
 
 #[macro_export]
 pub macro_rules! map {
   ($a: expr, $b: expr) => {
-    MapParser{
+    ::peruse::parsers::MapParser{
       parser: $a,
       mapper: box $b
     }
@@ -14,13 +13,13 @@ pub macro_rules! map {
 #[macro_export]
 macro_rules! or {
   ($a: expr, $b: expr) => {
-    OrParser{
+    ::peruse::parsers::OrParser{
       a: $a,
       b: $b,
     } 
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
-    OrParser{
+    ::peruse::parsers::OrParser{
       a: $a,
       b: or!($b, $($c),*),
     } 
@@ -34,13 +33,13 @@ macro_rules! or {
 #[macro_export]
 pub macro_rules! seq {
   ($a: expr, $b: expr ) => {
-    DualParser{
+    ::peruse::parsers::DualParser{
       first: $a,
       second: $b,
     }
  };
   ($a: expr, $b: expr $(, $c: expr)* ) => {
-    DualParser{
+    ::peruse::parsers::DualParser{
       first: $a,
       second: seq!($b, $($c),* ),
     }
@@ -54,7 +53,7 @@ pub macro_rules! seq {
 #[macro_export]
 pub macro_rules! repsep {
   ($rep: expr, $sep: expr, $min: expr) => {
-    RepSepParser{
+    ::peruse::parsers::RepSepParser{
       rep: $rep,
       sep: $sep,
       min_reps: $min,
@@ -68,7 +67,7 @@ pub macro_rules! repsep {
 #[macro_export]
 pub macro_rules! rep {
   ($rep: expr) => {
-    RepParser{
+    ::peruse::parsers::RepParser{
       parser: $rep,
     }
   }
@@ -77,7 +76,7 @@ pub macro_rules! rep {
 #[macro_export]
 pub macro_rules! opt {
   ($rep: expr) => {
-    OptionParser{
+    ::peruse::parsers::OptionParser{
       parser: $rep,
     }
   }
@@ -86,7 +85,7 @@ pub macro_rules! opt {
 #[macro_export]
 pub macro_rules! lazy {
   ($rep: expr) => {
-    LazyParser{
+    ::peruse::parsers::LazyParser{
       generator: box |&:| $rep
     }
   }
@@ -95,7 +94,7 @@ pub macro_rules! lazy {
 #[macro_export]
 pub macro_rules! matcher {
   ($t: ty : $($m: pat => $map: expr),+) => {
-    MatchParser{
+    ::peruse::parsers::MatchParser{
       matcher: box |&: i: &$t| match *i {
         $(
         $m => Ok($map),
