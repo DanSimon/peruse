@@ -163,7 +163,7 @@ impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)
 
 //memoization coming sooooon
 pub struct LazyParser<'a, I, O> {
-  pub generator: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>
+  pub generator: Box<Fn() -> Box<Parser<'a, I, O> + 'a> + 'a>
 }
 impl<'a, I, O> Parser<'a, I, O> for LazyParser<'a, I, O> {
   fn parse(&self, input: I) -> ParseResult<'a, I, O> {
