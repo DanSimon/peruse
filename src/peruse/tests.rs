@@ -23,7 +23,7 @@ fn test_seq() {
 #[test]
 fn test_seq_map() {
   let input = [Input::A, Input::B];
-  let parser = seq!(literal(Input::A), literal(Input::B) to |&: (a, b)| 5);
+  let parser = seq!(literal(Input::A), literal(Input::B) to |&: _| 5);
   let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
@@ -61,7 +61,7 @@ fn test_multi_or() {
 #[test]
 fn test_or_map() {
   let input = [Input::B];
-  let parser = or!(literal(Input::A), literal(Input::B) to |&: x| 5);
+  let parser = or!(literal(Input::A), literal(Input::B) to |&: _| 5);
   let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
@@ -69,7 +69,7 @@ fn test_or_map() {
 #[test]
 fn test_map() {
   let input = [Input::A];
-  let parser = map!(literal(Input::A), |&: a| 5);
+  let parser = map!(literal(Input::A), |&: _| 5);
   let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
@@ -80,7 +80,7 @@ fn test_recursive_or() {
   fn a_seq<'a>() -> Box<Parser<'a, &'a [Input], usize> + 'a> {
     Box::new(or!(
       map!(literal(Input::C), |&: _| 2),
-      map!(seq!(literal(Input::A), lazy!(a_seq())), |&: (a, seq)| 1 + seq)
+      map!(seq!(literal(Input::A), lazy!(a_seq())), |&: (_, seq)| 1 + seq)
     ))
   }
   let parser = a_seq();
