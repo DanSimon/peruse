@@ -108,7 +108,7 @@ impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Vec<O>> for RepParser<'
 pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
   pub rep: A,
   pub sep: B,
-  pub min_reps: uint,
+  pub min_reps: usize,
 }
 impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
