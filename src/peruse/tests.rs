@@ -1,3 +1,6 @@
+// these imports (of, eg, 'literal') are only used within macros. It appears
+// Rust will incorrectly warn that they are unused, hence this attribute.
+#[allow(unused_imports)]
 use parsers::*;
 
 #[derive(Show, Eq, PartialEq, Clone)]
