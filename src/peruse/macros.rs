@@ -99,7 +99,7 @@ pub macro_rules! matcher {
         $(
         $m => Ok($map),
         )+
-        other => Err(format!("Match error"))
+        _ => Err(format!("Match error"))
       }
     }
   }
