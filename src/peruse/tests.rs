@@ -75,10 +75,10 @@ fn test_map() {
 fn test_recursive_or() {
   let input = [Input::A, Input::A, Input::C];
   fn a_seq<'a>() -> Box<Parser<'a, &'a [Input], uint> + 'a> {
-    box or!(
+    Box::new(or!(
       map!(literal(Input::C), |&: _| 2u),
       map!(seq!(literal(Input::A), lazy!(a_seq())), |&: (a, seq)| 1u + seq)
-    )
+    ))
   }
   let parser = a_seq();
   let expected = Ok( (4u, [].as_slice()) );
