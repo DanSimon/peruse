@@ -136,7 +136,6 @@ impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I,
         }
       }
     }
-    unreachable!()
   }
 }
 
