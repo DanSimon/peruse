@@ -1,6 +1,6 @@
 use parsers::*;
 
-#[deriving(Show, Eq, PartialEq, Clone)]
+#[derive(Show, Eq, PartialEq, Clone)]
 enum Input {
   A, 
   B, 
