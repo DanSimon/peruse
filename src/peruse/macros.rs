@@ -5,7 +5,7 @@ pub macro_rules! map {
   ($a: expr, $b: expr) => {
     ::peruse::parsers::MapParser{
       parser: $a,
-      mapper: box $b
+      mapper: Box::new($b)
     }
   }
 }
@@ -86,7 +86,7 @@ pub macro_rules! opt {
 pub macro_rules! lazy {
   ($rep: expr) => {
     ::peruse::parsers::LazyParser{
-      generator: box |&:| $rep
+      generator: Box::new(|&:| $rep)
     }
   }
 }
@@ -95,12 +95,12 @@ pub macro_rules! lazy {
 pub macro_rules! matcher {
   ($t: ty : $($m: pat => $map: expr),+) => {
     ::peruse::parsers::MatchParser{
-      matcher: box |&: i: &$t| match *i {
+      matcher: Box::new(|&: i: &$t| match *i {
         $(
         $m => Ok($map),
         )+
         _ => Err(format!("Match error"))
-      }
+      })
     }
   }
 }
