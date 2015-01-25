@@ -18,13 +18,13 @@ macro_rules! or {
       b: $b,
     } 
  };
-  ($a: expr, $b: expr $(, $c: expr)* ) => {
+  ($a: expr, $b: expr, $($c: expr),* ) => {
     ::peruse::parsers::OrParser{
       a: $a,
       b: or!($b, $($c),*),
     } 
   };
-  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+  ($a: expr, $($b: expr),+ to $mapper: expr) => {
     map!(or!($a, $($b),+), $mapper)
   }
 
@@ -38,13 +38,13 @@ pub macro_rules! seq {
       second: $b,
     }
  };
-  ($a: expr, $b: expr $(, $c: expr)* ) => {
+  ($a: expr, $b: expr, $($c: expr),* ) => {
     ::peruse::parsers::DualParser{
       first: $a,
       second: seq!($b, $($c),* ),
     }
   };
-  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+  ($a: expr, $($b: expr),+ to $mapper: expr) => {
     map!(seq!($a, $($b),+), $mapper)
   }
 }
