@@ -9,4 +9,5 @@ authors = [ "Dan Simon <dan@dansimon.info>" ]
 name = "peruse"
 path = "src/peruse/lib.rs"
 
-
+[dependencies]
+regex = "0.1.10"
