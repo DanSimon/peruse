@@ -66,7 +66,7 @@ impl<'a> Parser<'a, &'a str, Captures<'a>> for RegexCapturesParser<'a> {
 
 /// A slice Parser that matches against the first item in the slice
 pub struct MatchParser<'a, I, O> {
-  pub matcher: Box< Fn<(&'a I,), Result<O, String>> +'a>
+  pub matcher: Box< Fn(&'a I) -> Result<O, String> +'a>
 }
 impl<'a, I: Clone, O> Parser<'a, &'a [I], O> for MatchParser<'a, I, O> {
   fn parse(&self, data: &'a[I]) -> ParseResult<'a, &'a[I], O> {
@@ -195,7 +195,7 @@ impl<'a, I: Clone, O, A: Parser<'a, I, O>, B: Parser<'a, I, O>> Parser<'a, I, O>
 /// A Parser that can map the successful result of a parser to another type
 pub struct MapParser<'a, I, O, U, P: Parser<'a, I, O>> {
   pub parser: P,
-  pub mapper: Box<Fn<(O,), U> + 'a>, //this has to be a &Fn and not a regular lambda since it must be immutable
+  pub mapper: Box<Fn(O) -> U + 'a>, //this has to be a &Fn and not a regular lambda since it must be immutable
 }
 impl<'a, I, O, U, P: Parser<'a, I, O>> Parser<'a, I, U> for MapParser<'a, I, O, U, P> {
   fn parse(&self, data: I) -> ParseResult<'a, I, U> {
