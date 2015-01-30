@@ -5,7 +5,7 @@ pub macro_rules! map {
   ($a: expr, $b: expr) => {
     ::peruse::parsers::MapParser{
       parser: $a,
-      mapper: box $b
+      mapper: Box::new($b)
     }
   }
 }
@@ -18,13 +18,13 @@ macro_rules! or {
       b: $b,
     } 
  };
-  ($a: expr, $b: expr $(, $c: expr)* ) => {
+  ($a: expr, $b: expr, $($c: expr),* ) => {
     ::peruse::parsers::OrParser{
       a: $a,
       b: or!($b, $($c),*),
     } 
   };
-  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+  ($a: expr, $($b: expr),+ to $mapper: expr) => {
     map!(or!($a, $($b),+), $mapper)
   }
 
@@ -38,13 +38,13 @@ pub macro_rules! seq {
       second: $b,
     }
  };
-  ($a: expr, $b: expr $(, $c: expr)* ) => {
+  ($a: expr, $b: expr, $($c: expr),* ) => {
     ::peruse::parsers::DualParser{
       first: $a,
       second: seq!($b, $($c),* ),
     }
   };
-  ($a: expr $(, $b: expr)+ to $mapper: expr) => {
+  ($a: expr, $($b: expr),+ to $mapper: expr) => {
     map!(seq!($a, $($b),+), $mapper)
   }
 }
@@ -86,7 +86,7 @@ pub macro_rules! opt {
 pub macro_rules! lazy {
   ($rep: expr) => {
     ::peruse::parsers::LazyParser{
-      generator: box |&:| $rep
+      generator: Box::new(|&:| $rep)
     }
   }
 }
@@ -95,12 +95,12 @@ pub macro_rules! lazy {
 pub macro_rules! matcher {
   ($t: ty : $($m: pat => $map: expr),+) => {
     ::peruse::parsers::MatchParser{
-      matcher: box |&: i: &$t| match *i {
+      matcher: Box::new(|&: i: &$t| match *i {
         $(
         $m => Ok($map),
         )+
-        other => Err(format!("Match error"))
-      }
+        _ => Err(format!("Match error"))
+      })
     }
   }
 }

@@ -108,7 +108,7 @@ impl<'a, I: Clone, O, P: Parser<'a, I, O>> Parser<'a, I, Vec<O>> for RepParser<'
 pub struct RepSepParser<'a, I, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> {
   pub rep: A,
   pub sep: B,
-  pub min_reps: uint,
+  pub min_reps: usize,
 }
 impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I, Vec<O>> for RepSepParser<'a, I, O, U, A, B> {
   fn parse(&self, data: I) -> ParseResult<'a, I, Vec<O>> {
@@ -136,7 +136,6 @@ impl<'a, I: Clone, O, U, A: Parser<'a, I, O>, B: Parser<'a, I, U>> Parser<'a, I,
         }
       }
     }
-    unreachable!()
   }
 }
 
@@ -163,7 +162,7 @@ impl <'a, I, A, B, X: Parser<'a, I, A>, Y: Parser<'a, I, B>> Parser<'a, I, (A,B)
 
 //memoization coming sooooon
 pub struct LazyParser<'a, I, O> {
-  pub generator: Box<Fn<(), Box<Parser<'a, I, O> + 'a> + 'a> + 'a>
+  pub generator: Box<Fn() -> Box<Parser<'a, I, O> + 'a> + 'a>
 }
 impl<'a, I, O> Parser<'a, I, O> for LazyParser<'a, I, O> {
   fn parse(&self, input: I) -> ParseResult<'a, I, O> {

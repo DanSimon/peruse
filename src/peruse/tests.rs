@@ -1,6 +1,9 @@
+// these imports (of, eg, 'literal') are only used within macros. It appears
+// Rust will incorrectly warn that they are unused, hence this attribute.
+#[allow(unused_imports)]
 use parsers::*;
 
-#[deriving(Show, Eq, PartialEq, Clone)]
+#[derive(Show, Eq, PartialEq, Clone)]
 enum Input {
   A, 
   B, 
@@ -20,8 +23,8 @@ fn test_seq() {
 #[test]
 fn test_seq_map() {
   let input = [Input::A, Input::B];
-  let parser = seq!(literal(Input::A), literal(Input::B) to |&: (a, b)| 5u);
-  let expected = Ok( (5u, [].as_slice()) );
+  let parser = seq!(literal(Input::A), literal(Input::B) to |&: _| 5);
+  let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
 
@@ -58,32 +61,31 @@ fn test_multi_or() {
 #[test]
 fn test_or_map() {
   let input = [Input::B];
-  let parser = or!(literal(Input::A), literal(Input::B) to |&: x| 5u);
-  let expected = Ok( (5u, [].as_slice()) );
+  let parser = or!(literal(Input::A), literal(Input::B) to |&: _| 5);
+  let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
 
 #[test]
 fn test_map() {
   let input = [Input::A];
-  let parser = map!(literal(Input::A), |&: a| 5u);
-  let expected = Ok( (5u, [].as_slice()) );
+  let parser = map!(literal(Input::A), |&: _| 5);
+  let expected = Ok( (5, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 }
 
 #[test]
 fn test_recursive_or() {
   let input = [Input::A, Input::A, Input::C];
-  fn a_seq<'a>() -> Box<Parser<'a, &'a [Input], uint> + 'a> {
-    box or!(
-      map!(literal(Input::C), |&: _| 2u),
-      map!(seq!(literal(Input::A), lazy!(a_seq())), |&: (a, seq)| 1u + seq)
-    )
+  fn a_seq<'a>() -> Box<Parser<'a, &'a [Input], usize> + 'a> {
+    Box::new(or!(
+      map!(literal(Input::C), |&: _| 2),
+      map!(seq!(literal(Input::A), lazy!(a_seq())), |&: (_, seq)| 1 + seq)
+    ))
   }
   let parser = a_seq();
-  let expected = Ok( (4u, [].as_slice()) );
+  let expected = Ok( (4, [].as_slice()) );
   assert_eq!( parser.parse(input.as_slice()), expected );
-
 }
 
 #[test]
@@ -105,8 +107,8 @@ fn test_opt() {
 #[test]
 fn test_matcher() {
   let input = [Input::A, Input::B, Input::C];
-  let parser = rep!(matcher!(Input : Input::A => 4u, Input::B => 5u));
-  let expected = Ok( (vec![4u, 5u], input.slice_from(2)) );
+  let parser = rep!(matcher!(Input : Input::A => 4, Input::B => 5));
+  let expected = Ok( (vec![4, 5], input.slice_from(2)) );
   assert_eq!( parser.parse(input.as_slice()), expected );
 
 }

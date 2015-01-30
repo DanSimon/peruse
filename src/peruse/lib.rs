@@ -1,14 +1,12 @@
-#![feature(globs)]
-#![feature(phase)]
 #![feature(unboxed_closures)]
-#![feature(macro_rules)]
+#![allow(unstable)]
 
 extern crate regex;
 
 
 pub mod parsers;
 
-#[macro_escape]
+#[macro_use]
 pub mod macros;
 
 mod tests;
