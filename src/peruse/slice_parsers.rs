@@ -96,7 +96,6 @@ impl<T: Eq + Clone> SliceParser for LiteralParser< T> {
 
 impl<T: Eq + Clone> ParserCombinator for LiteralParser<T>{}
 
-#[derive(Clone)]
 pub struct RepeatParser<P: SliceParser> {
   parser: P
 }
@@ -120,6 +119,15 @@ impl<T: SliceParser> SliceParser for RepeatParser<T> {
     }
   }
 }
+
+impl<T: ParserCombinator> ParserCombinator for RepeatParser<T> {}
+
+impl<T: ParserCombinator> Clone for RepeatParser<T> {
+  fn clone(&self) -> Self {
+    RepeatParser{parser: self.parser.clone()}
+  }
+}
+
 
 pub struct MapParser<P: SliceParser, T> {
   parser: P,

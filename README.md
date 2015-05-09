@@ -16,6 +16,19 @@ the next.
 Here's a quick example of how simple parsers are used to build more complex parsers
 
 ```rust
+use slice_parsers::*;
+
+//let's say we have the following array
+let arr = [1, 0, 1, 0, 1, 0];
+
+//how about we write a parser to count the number of sequences of 1, 0
+
+let p1 = lit(1).then(lit(0)).repeat().map(|v| v.length());
+
+//calling parse will return a ParseResult, containing the parsed value along
+//with a slice of any unparsed data
+let res = p2.parse(&arr); //Ok(3, [])
+
 //define some input tokens
 enum Token { A, B, C }
 
