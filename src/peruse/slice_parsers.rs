@@ -101,7 +101,7 @@ impl<T: Eq + Clone> SliceParser for LiteralParser< T> {
       return Err(format!("ran out of data"))
     }
     if data[0] == self.literal {
-      Ok((data[0].clone(), data.tail()))
+      Ok((data[0].clone(), &data[1..]))
     } else {
       Err(format!("Literal mismatch"))
     }
