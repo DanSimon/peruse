@@ -13,12 +13,23 @@ input value, which for slices is the remaining portion of the input.  Thus
 parsers can be chained together, so that the result from one parser is fed into
 the next.
 
-Here's a quick example of how simple parsers are used to build more complex parsers
+Peruse contains 3 types of parsers
+
+* Slice Parsers - parse slices into values
+* String parsers (coming soon) - parse strings
+* Stream parsers (coming soon) - parse slices of bytes where a single slice may only contain part of a complete sequence.
+
+
+## Slice Parsers
+
+Slice parsers take in as input a slice `&[T]`.  This kind of parser is ideal for parsing recursive syntax trees.
 
 ```rust
-use slice_parsers::*;
+use peruse::slice_parsers::*;
 
-//let's start with something simple, a parser that looks for one particular integer
+//let's start with something simple, a parser that looks for one particular
+//integer as the first element of a given slice
+
 let p1 = lit(3);
 
 //calling parse will return a ParseResult, containing the parsed value along
@@ -65,21 +76,6 @@ fn recurse() -> Box<SliceParser<I=i32, O=i32>> {
 println!("{:?}",recurse().parse(&[0,0,0,0,0,1]));
 //Ok((5, []))
 ```
-
-
-### More Examples
-
-The [tests](src/peruse/tests.rs) have some basic examples of how to use the combinators.  You don't
-have to use the macros, but without them it gets pretty ugly.
-
-For a sorta real-world example, check out
-[Coki](https://github.com/DanSimon/coki), a small programming language I'm
-working on that uses Peruse for both its lexer and parser.
-
-
-## Known Issues
-
-* sequences of >2 parsers using `seq!` get turned into nested tuples.  Currently trying to figure out if I can write a macro to flatten them.
 
 ## Building
 
