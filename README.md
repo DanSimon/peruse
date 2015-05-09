@@ -1,5 +1,7 @@
 #Peruse
 
+[![Build Status](https://travis-ci.org/DanSimon/peruse.svg?branch=master)](https://travis-ci.org/DanSimon/peruse)
+
 Peruse is a small parser-combinator library for rust.  The goal is to be able
 to write clean, efficient parsers powerful enough to handle most grammars.
 This project is my first foray into rust and is very much a work-in-progress.
