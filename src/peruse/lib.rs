@@ -1,17 +1,11 @@
-#![feature(unboxed_closures)]
-#![allow(unstable)]
+#![feature(collections)]
 
 extern crate regex;
 
 
-pub mod parsers;
+pub mod slice_parsers;
 
-#[macro_use]
-pub mod macros;
+mod slice_parser_tests;
+//mod tests;
 
-mod tests;
-
-mod peruse {
-    pub use parsers;
-}
 
