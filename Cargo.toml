@@ -4,6 +4,16 @@ name = "peruse"
 version = "0.2.0"
 authors = [ "Dan Simon <dan@dansimon.info>" ]
 
+description = "A small parser combinator library"
+
+repository = "https://github.com/DanSimon/peruse"
+
+readme = "README.md"
+
+keywords = ["parser", "combinator"]
+
+license = "MIT"
+
 [lib]
 
 name = "peruse"
@@ -11,3 +21,4 @@ path = "src/peruse/lib.rs"
 
 [dependencies]
 regex = "0.1.10"
+
