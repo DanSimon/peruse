@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/DanSimon/peruse.svg?branch=master)](https://travis-ci.org/DanSimon/peruse)
 
-[![Crates.io](https://img.shields.io/crates/v/rustc-serialize.svg)](https://crates.io/crates/peruse)
+[![Crates.io](https://img.shields.io/crates/v/peruse.svg)](https://crates.io/crates/peruse)
 
 Peruse is a small parser-combinator library for rust.  The goal is to be able
 to write clean, efficient parsers powerful enough to handle most grammars.
