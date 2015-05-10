@@ -48,6 +48,30 @@ pub trait ParserCombinator : SliceParser + Clone {
 
 pub type ParseResult<I,O> = Result<(O, I), String>;
 
+/// Create a parser that only recognizes the given literal value
+pub fn lit<T: Eq + Clone>(l: T) -> LiteralParser<T> {
+  LiteralParser{literal: l}
+}
+
+/// Create a parser that will return Some if the given parser is successful, None otherwise
+pub fn opt<T: SliceParser>(t: T) -> OptionParser<T> {
+  OptionParser{parser: t}
+}
+
+/// Create a lazily evaluated parser from a function.  This can be used to generate recursive parsers
+pub fn recursive<I,O, F:  Fn() -> Box<SliceParser<I=I,O=O>>>(f: F) -> RecursiveParser<I,O,F> {
+  RecursiveParser{parser: Rc::new(f)}
+}
+
+pub fn matcher<T: Clone, U, F: 'static + Fn(T) -> Option<U>>(f: F) -> MatchParser<T, U> {
+  MatchParser{matcher: Rc::new(Box::new(f))}
+}
+
+
+//////////////////////// STRUCTS /////////////////////////////////////////////
+
+/// A Chained parser contains two parsers that will be used in sequence to
+/// create a tuple of parsed values
 pub struct ChainedParser<C, A: SliceParser<I=C>, B: SliceParser<I=C>> {
   first: A,
   second: B,
@@ -77,16 +101,8 @@ impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  Clone for ChainedPa
 impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  ParserCombinator for ChainedParser<C, A, B> {}
 
 
-/// Create a parser that only recognizes the given literal value
-pub fn lit<T: Eq + Clone>(l: T) -> LiteralParser<T> {
-  LiteralParser{literal: l}
-}
-
-/// Create a parser that will return Some if the given parser is successful, None otherwise
-pub fn opt<T: SliceParser>(t: T) -> OptionParser<T> {
-  OptionParser{parser: t}
-}
-
+/// A LiteralParser looks for an exact match of the given item at the beginning
+// of the slice
 #[derive(Clone)]
 pub struct LiteralParser< T: Eq + Clone> {
   pub literal: T,
@@ -110,6 +126,8 @@ impl<T: Eq + Clone> SliceParser for LiteralParser< T> {
 
 impl<T: Eq + Clone> ParserCombinator for LiteralParser<T>{}
 
+/// A Parser that repeats the given parser until it encounters an error.  A
+/// vector of the accumulated parsed values is returned
 pub struct RepeatParser<P: SliceParser> {
   parser: P
 }
@@ -143,6 +161,7 @@ impl<T: ParserCombinator> Clone for RepeatParser<T> {
 }
 
 
+/// A Parser that uses a closure to map the result of another parser
 pub struct MapParser<P: SliceParser, T> {
   parser: P,
   mapper: Rc<Box<Fn(P::O) -> T>>,
@@ -187,7 +206,6 @@ impl<I,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> SliceParser for OrPa
   }
 }
 
-
 impl<I,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> Clone for OrParser<I,O,S,T> {
 
   fn clone(&self) -> Self {
@@ -196,6 +214,7 @@ impl<I,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> Clone for 
 }
 
 impl<I,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> ParserCombinator for OrParser<I,O,S,T> {}
+
 
 #[derive(Clone)]
 pub struct OptionParser<P: SliceParser> {
@@ -237,7 +256,34 @@ impl<I, O, F> Clone for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParse
 }
 
 
-/// Create a lazily evaluated parser from a function.  This can be used to generate recursive parsers
-pub fn recursive<I,O, F:  Fn() -> Box<SliceParser<I=I,O=O>>>(f: F) -> RecursiveParser<I,O,F> {
-  RecursiveParser{parser: Rc::new(f)}
+pub struct MatchParser<T: Clone, U> {
+  matcher: Rc<Box<Fn(T) -> Option<U>>>
 }
+
+impl<T: Clone, U> SliceParser for MatchParser<T,U> {
+  type I = T;
+  type O = U;
+
+  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+    if data.len() < 1 {
+      return Err(format!("ran out of data"))
+    }
+    match (self.matcher)(data[0].clone()) {
+      Some(u) => Ok((u, &data[1..])),
+      None    => Err(format!("Match failed"))
+    }
+  }
+}
+
+
+impl<T: Clone, U> ParserCombinator for MatchParser<T,U> {}
+
+impl<T: Clone, U> Clone for MatchParser<T,U> {
+
+  fn clone(&self) -> Self {
+    MatchParser{matcher: self.matcher.clone()}
+  }
+
+}
+
+
