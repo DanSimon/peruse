@@ -13,7 +13,6 @@ fn test_then() {
   let input = [1, 2, 3];
   assert_eq!(parser.parse(&input), Ok(((1, 2), &input[2..])));
 }
-/*
 
 #[test]
 fn test_then_l() {
@@ -45,6 +44,7 @@ fn test_repeat() {
   assert_eq!(parser.parse(&input), Ok((vec![1, 1, 1], &input[3..])));
 }
 
+/*
 #[test]
 fn test_or() {
   let parser = lit(1).or(lit(0)).repeat();
