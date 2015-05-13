@@ -15,17 +15,17 @@ pub trait ParserCombinator : SliceParser + Clone {
 
   /// Chain this parser with another parser, creating new parser that returns a
   /// tuple of their results
-  fn then<P: SliceParser<I=Self::I>>(&self, p: P) -> ChainedParser<Self::I, Self,P> {
+  fn then<P: SliceParser<I=Self::I>>(&self, p: P) -> ChainedParser<Self,P> {
     ChainedParser{first: self.clone(), second: p}
   }
 
   /// Chain this parser with another parser, but toss the value from this parser
-  fn then_r<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self::I, Self, P>, P::O> {
+  fn then_r<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self, P>, P::O> {
     self.then(p).map(|(_, t)| t)
   }
 
   /// Chain this parser with another parser, but toss the value from the other parser
-  fn then_l<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self::I, Self, P>, Self::O> {
+  fn then_l<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self, P>, Self::O> {
     self.then(p).map(|(t, _)| t)
   }
 
@@ -72,11 +72,11 @@ pub fn matcher<T: Clone, U, F: 'static + Fn(T) -> Option<U>>(f: F) -> MatchParse
 
 /// A Chained parser contains two parsers that will be used in sequence to
 /// create a tuple of parsed values
-pub struct ChainedParser<C, A: SliceParser<I=C>, B: SliceParser<I=C>> {
+pub struct ChainedParser<A,B> {
   first: A,
   second: B,
 }
-impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<C, A, B> {
+impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<A, B> {
   type I = C;
   type O = (A::O,B::O);
 
@@ -91,14 +91,14 @@ impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<
   }
 }
 
-impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  Clone for ChainedParser<C, A, B> {
+impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  Clone for ChainedParser<A, B> {
   
   fn clone(&self) -> Self {
     ChainedParser{first: self.first.clone(), second: self.second.clone()}
   }
 }
 
-impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  ParserCombinator for ChainedParser<C, A, B> {}
+impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  ParserCombinator for ChainedParser<A, B> {}
 
 
 /// A LiteralParser looks for an exact match of the given item at the beginning
