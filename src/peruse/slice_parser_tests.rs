@@ -53,7 +53,7 @@ fn test_or() {
 
 #[test]
 fn test_recursive() {
-  fn recurse() -> Box<SliceParser<I=i32, O=i32>> {
+  fn recurse() -> Box<SliceParser<I=[i32], O=i32>> {
     let end = lit(1).map(|_| 0);
     let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
     Box::new(end.or(rec))

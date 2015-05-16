@@ -20,12 +20,12 @@ pub trait ParserCombinator : SliceParser + Clone {
   }
 
   /// Chain this parser with another parser, but toss the value from this parser
-  fn then_r<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self, P>, P::O> {
+  fn then_r<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<Self::I, ChainedParser<Self, P>, P::O> {
     self.then(p).map(|(_, t)| t)
   }
 
   /// Chain this parser with another parser, but toss the value from the other parser
-  fn then_l<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<ChainedParser<Self, P>, Self::O> {
+  fn then_l<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<Self::I, ChainedParser<Self, P>, Self::O> {
     self.then(p).map(|(t, _)| t)
   }
 
@@ -35,12 +35,12 @@ pub trait ParserCombinator : SliceParser + Clone {
   }
   
   /// Map the value of this parser
-  fn map<T, F: 'static + Fn(Self::O) -> T>(&self, f: F) -> MapParser<Self, T> {
+  fn map<T, F: 'static + Fn(Self::O) -> T>(&self, f: F) -> MapParser<Self::I, Self, T> {
     MapParser{parser: self.clone(), mapper: Rc::new(Box::new(f))}
   }
 
   /// Create a disjunction with another parser.  If this parser produces an error, the other parser will be used
-  fn or<P: SliceParser<I=Self::I, O=Self::O>>(&self, p: P) -> OrParser<Self::I, Self::O, Self,P> {
+  fn or<P: SliceParser<I=Self::I, O=Self::O>>(&self, p: P) -> OrParser<Self,P> {
     OrParser{first: self.clone(), second: p}
   }
 
@@ -59,7 +59,7 @@ pub fn opt<T: SliceParser>(t: T) -> OptionParser<T> {
 }
 
 /// Create a lazily evaluated parser from a function.  This can be used to generate recursive parsers
-pub fn recursive<I,O, F:  Fn() -> Box<SliceParser<I=I,O=O>>>(f: F) -> RecursiveParser<I,O,F> {
+pub fn recursive<I:?Sized,O, F:  Fn() -> Box<SliceParser<I=I,O=O>>>(f: F) -> RecursiveParser<I,O,F> {
   RecursiveParser{parser: Rc::new(f)}
 }
 
@@ -76,7 +76,7 @@ pub struct ChainedParser<A,B> {
   first: A,
   second: B,
 }
-impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<A, B> {
+impl<C: ?Sized, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<A, B> {
   type I = C;
   type O = (A::O,B::O);
 
@@ -91,14 +91,14 @@ impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<
   }
 }
 
-impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  Clone for ChainedParser<A, B> {
+impl<C: ?Sized, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  Clone for ChainedParser<A, B> {
   
   fn clone(&self) -> Self {
     ChainedParser{first: self.first.clone(), second: self.second.clone()}
   }
 }
 
-impl<C, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  ParserCombinator for ChainedParser<A, B> {}
+impl<C: ?Sized, A: ParserCombinator<I=C>, B: ParserCombinator<I=C>>  ParserCombinator for ChainedParser<A, B> {}
 
 
 /// A LiteralParser looks for an exact match of the given item at the beginning
@@ -162,12 +162,12 @@ impl<T: ParserCombinator> Clone for RepeatParser<T> {
 
 
 /// A Parser that uses a closure to map the result of another parser
-pub struct MapParser<P: SliceParser, T> {
+pub struct MapParser<I: ?Sized, P: SliceParser<I=I>, T> {
   parser: P,
   mapper: Rc<Box<Fn(P::O) -> T>>,
 }
 
-impl<P: SliceParser, T> SliceParser for MapParser<P,T> {
+impl<I: ?Sized, P: SliceParser<I=I>, T> SliceParser for MapParser<I,P,T> {
   type I = P::I;
   type O = T;
 
@@ -177,21 +177,21 @@ impl<P: SliceParser, T> SliceParser for MapParser<P,T> {
 
 }
 
-impl<P: ParserCombinator, T> Clone for MapParser<P,T> {
+impl<I: ?Sized, P: ParserCombinator<I=I>, T> Clone for MapParser<I,P,T> {
 
   fn clone(&self) -> Self {
     MapParser{parser: self.parser.clone(), mapper: self.mapper.clone()}
   }
 }
 
-impl<P: ParserCombinator, T> ParserCombinator for MapParser<P,T> {}
+impl<I: ?Sized, P: ParserCombinator<I=I>, T> ParserCombinator for MapParser<I,P,T> {}
 
-pub struct OrParser<I,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> {
+pub struct OrParser<S,T> {
   first: S,
   second: T,
 }
 
-impl<I,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> SliceParser for OrParser<I,O,S,T> {
+impl<I:?Sized,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> SliceParser for OrParser<S,T> {
   type I = I;
   type O = O;
 
@@ -206,14 +206,14 @@ impl<I,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> SliceParser for OrPa
   }
 }
 
-impl<I,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> Clone for OrParser<I,O,S,T> {
+impl<I:?Sized,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> Clone for OrParser<S,T> {
 
   fn clone(&self) -> Self {
     OrParser{first: self.first.clone(), second: self.second.clone()}
   }
 }
 
-impl<I,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> ParserCombinator for OrParser<I,O,S,T> {}
+impl<I:?Sized,O, S: ParserCombinator<I=I,O=O>, T: ParserCombinator<I=I,O=O>> ParserCombinator for OrParser<S,T> {}
 
 
 #[derive(Clone)]
@@ -232,11 +232,11 @@ impl<P: SliceParser> SliceParser for OptionParser<P> {
   }
 }
 
-pub struct RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>>{
+pub struct RecursiveParser<I: ?Sized, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>>{
   parser: Rc<F>
 }
 
-impl<I, O, F> SliceParser for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {
+impl<I:?Sized, O, F> SliceParser for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {
 
   type I = I;
   type O = O;
@@ -247,9 +247,9 @@ impl<I, O, F> SliceParser for RecursiveParser<I, O, F> where F: Fn() -> Box<Slic
 
 }
 
-impl<I, O, F> ParserCombinator for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {}
+impl<I:?Sized, O, F> ParserCombinator for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {}
 
-impl<I, O, F> Clone for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {
+impl<I: ?Sized, O, F> Clone for RecursiveParser<I, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>> {
   fn clone(&self) -> Self {
     RecursiveParser{parser: self.parser.clone()}
   }
@@ -261,10 +261,10 @@ pub struct MatchParser<T: Clone, U> {
 }
 
 impl<T: Clone, U> SliceParser for MatchParser<T,U> {
-  type I = T;
+  type I = [T];
   type O = U;
 
-  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
+  fn parse<'a>(&self, data: &'a [T]) -> ParseResult<&'a [T], Self::O> {
     if data.len() < 1 {
       return Err(format!("ran out of data"))
     }
