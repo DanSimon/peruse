@@ -3,10 +3,10 @@ use std::rc::Rc;
 /// A SliceParser is a parser that parses some elements out of the beginning of
 /// a slice and returns a parsed value along with the rest of the unparsed slice
 pub trait SliceParser  {
-  type I;
+  type I: ?Sized;
   type O;
 
-  fn parse<'a>(&self, data: &'a[Self::I]) -> ParseResult<&'a [Self::I], Self::O>;
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O>;
 }
 
 /// Combinator methods for slice parsers.  In most cases, these methods copy
@@ -80,7 +80,7 @@ impl<C, A: SliceParser<I=C>, B: SliceParser<I=C>> SliceParser for ChainedParser<
   type I = C;
   type O = (A::O,B::O);
 
-  fn parse<'a>(&self, data: &'a[Self::I]) -> ParseResult<&'a [Self::I], Self::O>{
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O>{
     match self.first.parse(data) {
       Ok((a, d2)) => match self.second.parse(d2) {
         Ok((b, remain)) => Ok(((a, b), remain)),
@@ -109,7 +109,7 @@ pub struct LiteralParser< T: Eq + Clone> {
 }
 
 impl<T: Eq + Clone> SliceParser for LiteralParser< T> {
-  type I = T;
+  type I = [T];
   type O = T;
 
   fn parse<'a>(&self, data: &'a [T]) -> ParseResult<&'a [T], T> {
@@ -135,7 +135,7 @@ impl<T: SliceParser> SliceParser for RepeatParser<T> {
   type I = T::I;
   type O = Vec<T::O>;
   
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     let mut remain = data;
     let mut v: Vec<T::O> = Vec::new();
     loop {
@@ -171,7 +171,7 @@ impl<P: SliceParser, T> SliceParser for MapParser<P,T> {
   type I = P::I;
   type O = T;
 
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     self.parser.parse(data).map(|(output, input)| ((self.mapper)(output), input))
   }
 
@@ -195,7 +195,7 @@ impl<I,O, S: SliceParser<I=I,O=O>, T: SliceParser<I=I,O=O>> SliceParser for OrPa
   type I = I;
   type O = O;
 
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     match self.first.parse(data.clone()) {
       Ok((a, d2)) => Ok((a, d2)),
       Err(_) => match self.second.parse(data.clone()) {
@@ -224,7 +224,7 @@ impl<P: SliceParser> SliceParser for OptionParser<P> {
   type I = P::I;
   type O = Option<P::O>;
 
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     match self.parser.parse(data.clone()) {
       Ok((result, rest))  => Ok((Some(result), rest)),
       Err(_)              => Ok((None, data)),
@@ -241,7 +241,7 @@ impl<I, O, F> SliceParser for RecursiveParser<I, O, F> where F: Fn() -> Box<Slic
   type I = I;
   type O = O;
 
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     (self.parser)().parse(data)
   }
 
@@ -264,7 +264,7 @@ impl<T: Clone, U> SliceParser for MatchParser<T,U> {
   type I = T;
   type O = U;
 
-  fn parse<'a>(&self, data: &'a [Self::I]) -> ParseResult<&'a [Self::I], Self::O> {
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
     if data.len() < 1 {
       return Err(format!("ran out of data"))
     }
