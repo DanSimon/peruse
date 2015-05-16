@@ -32,8 +32,8 @@ fn test_then_r() {
 
 #[test]
 fn test_map() {
-  let parser = lit(1).then(lit(2)).map(|(a, b)| a + b);
   let input = [1, 2, 3];
+  let parser = lit(1).then(lit(2)).map(|(a, b)| a + b);
   assert_eq!(parser.parse(&input), Ok((3, &input[2..])));
 }
 
@@ -76,7 +76,73 @@ fn test_opt() {
 
 #[test]
 fn test_match() {
-  let parser = matcher(|i| if (i < 4) {Some(i)} else {None}).repeat();
+  let parser = matcher(|i| if i < 4 {Some(i)} else {None}).repeat();
   let input = [1, 2, 3, 4, 5];
   assert_eq!(parser.parse(&input), Ok((vec![1, 2, 3], &input[3..])));
+}
+
+#[test]
+fn basic_example() {
+  #[derive(Debug, Clone, Eq, PartialEq)]
+  enum Token {
+    PlusSign,
+    MultSign,
+    OpenParen,
+    CloseParen,
+    Term(i32)
+  }
+  #[derive(Clone, Debug, Eq, PartialEq)]
+  enum Expression {
+    Plus(Vec<Expression>),
+    Mult(Vec<Expression>),
+    Term(i32),
+  }
+
+  fn eval(expr: &Expression) -> i32 {
+    match  *expr {
+      Expression::Plus(ref v) => {
+        let mut sum = 0;
+        for e in v.iter() {
+          sum += eval(e);
+        }
+        sum
+      },
+      Expression::Mult(ref v) => {
+        let mut prod = 1;
+        for e in v.iter() {
+          prod *= eval(e);
+        }
+        prod
+      },
+      Expression::Term(t) => t
+    }
+  }
+
+
+  fn expression() -> Box<SliceParser<I=[Token], O=Expression>> {
+
+    let paren = lit(Token::OpenParen).then_r(recursive(|| expression())).then_l(lit(Token::CloseParen));
+
+    let term = || paren.or(matcher(|t| match t {
+      Token::Term(t) => Some(Expression::Term(t)),
+      _ => None
+    }));
+
+    let mult = repsep(term(), lit(Token::MultSign)).map(|v| if v.len() == 1 {v[0].clone()} else {Expression::Mult(v)});
+
+    let add = repsep(mult, lit(Token::PlusSign)).map(|v| if v.len() == 1 {v[0].clone()} else {Expression::Plus(v)});
+
+    Box::new(add)
+  }
+
+  let input = [Token::Term(4), Token::MultSign, Token::Term(5)];
+  let expected = Expression::Mult(vec![Expression::Term(4), Expression::Term(5)]);
+  let (res, _) = expression().parse(&input).unwrap();
+  assert_eq!(res, expected);
+
+  // (3 + 4) * (4 + 5 + 6)
+  let input2 = [Token::OpenParen, Token::Term(3), Token::PlusSign, Token::Term(4), Token::CloseParen, Token::MultSign, Token::OpenParen, Token::Term(4), Token::PlusSign, Token::Term(5), Token::PlusSign, Token::Term(6), Token::CloseParen];
+
+  let (res, _ ) = expression().parse(&input2).unwrap();
+  assert_eq!(eval(&res), 105);
 }

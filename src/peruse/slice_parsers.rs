@@ -67,6 +67,10 @@ pub fn matcher<T: Clone, U, F: 'static + Fn(T) -> Option<U>>(f: F) -> MatchParse
   MatchParser{matcher: Rc::new(Box::new(f))}
 }
 
+pub fn repsep<I: ?Sized, A: SliceParser<I=I>, B: SliceParser<I=I>>(rep: A, sep: B) -> RepSepParser<A,B> {
+  RepSepParser{rep: rep, sep: sep, min_reps: 1}
+}
+
 
 //////////////////////// STRUCTS /////////////////////////////////////////////
 
@@ -285,5 +289,56 @@ impl<T: Clone, U> Clone for MatchParser<T,U> {
   }
 
 }
+
+/// A Parser that will repeatedly parse `rep` and `sep` in sequence until `sep`
+/// returns an error.  The accumulated `rep` results are returned.  If `rep`
+/// returns an error at any time, the error is escelated.
+pub struct RepSepParser<A,B> {
+  pub rep: A,
+  pub sep: B,
+  pub min_reps: usize,
+}
+impl<I: ?Sized, A: SliceParser<I=I>, B: SliceParser<I=I>> SliceParser for RepSepParser<A,B> {
+  type I = I;
+  type O = Vec<A::O>;
+
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
+    let mut remain = data;
+    let mut v: Vec<A::O> = Vec::new();
+    loop {
+      match self.rep.parse(remain) {
+        Ok((result, rest)) => {
+          v.push(result);
+          match self.sep.parse(rest.clone()) {
+            Ok((_, rest2)) => {
+              remain = rest2
+            }
+            Err(_) => {
+              if v.len() < self.min_reps {
+                return Err(format!("Not enough reps: required {}, got {}", self.min_reps, v.len()))
+              } else {
+                return Ok((v, rest))
+              }
+            }
+          }
+        }
+        Err(err) => {
+          return Err(format!("Error on rep: {}", err));
+        }
+      }
+    }
+  }
+}
+
+impl<I: ?Sized, A: ParserCombinator<I=I>, B: ParserCombinator<I=I>> ParserCombinator for RepSepParser<A,B> {}
+
+impl<I: ?Sized, A: ParserCombinator<I=I>, B: ParserCombinator<I=I>> Clone for RepSepParser<A,B> {
+  
+  fn clone(&self) -> Self {
+    RepSepParser{rep : self.rep.clone(), sep: self.sep.clone(), min_reps: self.min_reps}
+  }
+
+}
+
 
 
