@@ -48,7 +48,8 @@ pub fn rlit<T: Clone>(r: Regex, l: T) -> RegexLiteralParser<T> {
   RegexLiteralParser{regex: r, literal: l}
 }
 pub fn str_lit<T: Clone>(s: &str, l: T) -> RegexLiteralParser<T> {
-  let regex = Regex::new(s).unwrap();
+  let r = format!("^{}", s);
+  let regex = Regex::new(r.as_str()).unwrap();
   RegexLiteralParser{regex: regex, literal: l}
 }
 

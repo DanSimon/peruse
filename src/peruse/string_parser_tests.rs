@@ -4,9 +4,16 @@ use std::str::FromStr;
 
 #[test]
 fn test_literal() {
-  let parser = str_lit("a", 3).repeat();
-  let data = "aaabb";
-  assert_eq!(parser.parse(data), Ok((vec![3,3,3], "bb")));
+  let parser = (str_lit("a", 3).or(str_lit("b", 4))).repeat();
+  let data = "babac";
+  assert_eq!(parser.parse(data), Ok((vec![4,3,4,3], "c")));
+}
+
+#[test]
+fn test_or() {
+  let parser = str_lit("b", 3);//.or(str_lit("b", 4));
+  let data = "babac";
+  assert_eq!(parser.parse(data), Ok((3, "abac")));
 }
 
 #[test]
