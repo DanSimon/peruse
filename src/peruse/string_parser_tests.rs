@@ -10,13 +10,6 @@ fn test_literal() {
 }
 
 #[test]
-fn test_or() {
-  let parser = str_lit("b", 3);//.or(str_lit("b", 4));
-  let data = "babac";
-  assert_eq!(parser.parse(data), Ok((3, "abac")));
-}
-
-#[test]
 fn test_captures() {
   let parser = capture(r"(\d+)", |caps| <i32>::from_str(caps.at(1).unwrap()).unwrap());
   let data = "34bah";

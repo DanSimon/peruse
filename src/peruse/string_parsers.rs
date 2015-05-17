@@ -44,6 +44,9 @@ impl<T, F: Fn(Captures) -> T> SliceParser for RegexCapturesParser<T, F> {
   }
 }
 
+impl<T, F: Fn(Captures) -> T> ParserCombinator for RegexCapturesParser<T, F> {}
+
+
 pub fn rlit<T: Clone>(r: Regex, l: T) -> RegexLiteralParser<T> {
   RegexLiteralParser{regex: r, literal: l}
 }
