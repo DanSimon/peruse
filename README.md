@@ -17,16 +17,14 @@ input value, which for slices is the remaining portion of the input.  Thus
 parsers can be chained together, so that the result from one parser is fed into
 the next.
 
-Peruse contains 3 types of parsers
+Peruse contains 2 types of parsers
 
-* Slice Parsers - parse slices into values
-* String parsers (coming soon) - parse strings
-* Stream parsers (coming soon) - parse slices of bytes where a single slice may only contain part of a complete sequence.
+* Recursive-Descent Parsers - These are your more typical parsers generally used for building recursive data structures like AST's or JSON.
+
+* Stream parsers (coming soon) - These are stateful parsers that are able to receive the input data in pieces.  These are useful mostly for network protocols.
 
 
-## Slice Parsers
-
-Slice parsers take in as input a slice `&[T]`.  This kind of parser is ideal for parsing recursive syntax trees.
+## Examples
 
 ```rust
 use peruse::slice_parsers::*;
