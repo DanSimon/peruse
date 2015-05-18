@@ -71,6 +71,10 @@ pub fn repsep<I: ?Sized, A: SliceParser<I=I>, B: SliceParser<I=I>>(rep: A, sep: 
   RepSepParser{rep: rep, sep: sep, min_reps: 1}
 }
 
+pub fn one_of<T: SliceParser>(t: Vec<T>) -> OneOfParser<T> {
+  OneOfParser{options: t}
+}
+
 
 //////////////////////// STRUCTS /////////////////////////////////////////////
 
@@ -190,7 +194,7 @@ impl<I: ?Sized, P: ParserCombinator<I=I>, T> Clone for MapParser<I,P,T> {
 
 impl<I: ?Sized, P: ParserCombinator<I=I>, T> ParserCombinator for MapParser<I,P,T> {}
 
-pub struct OrParser<S,T> {
+pub struct OrParser<S: SliceParser,T: SliceParser> {
   first: S,
   second: T,
 }
@@ -341,4 +345,28 @@ impl<I: ?Sized, A: ParserCombinator<I=I>, B: ParserCombinator<I=I>> Clone for Re
 }
 
 
+/// A Parser that takes a vector of parsers (of the exact same type) and
+/// returns the value from the first parser to return a non-error.  This parser
+/// solely exists because doing a or b or c or d... ends up crushing rustc
+#[derive(Clone)]
+pub struct OneOfParser<T: SliceParser> {
+  options: Vec<T>
+}
 
+impl<T: SliceParser> SliceParser for OneOfParser<T> {
+  type I = T::I;
+  type O = T::O;
+
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
+    for p in self.options.iter() {
+      let r = p.parse(data.clone());
+      if r.is_ok() {
+        return r;
+      }
+    }
+    Err(format!("All options failed"))
+  }
+
+}
+
+impl<T: ParserCombinator> ParserCombinator for OneOfParser<T> {}

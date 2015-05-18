@@ -202,3 +202,54 @@ fn basic_example() {
   let (res, _ ) = expression().parse(&input2).unwrap();
   assert_eq!(eval(&res), 105);
 }
+
+#[test]
+fn test_oneof() {
+
+  //this has to be a long list to make sure we don't hit an issue with rustc taking forever
+  let p = one_of(vec![
+    lit(1), 
+    lit(3), 
+    lit(5), 
+    lit(7), 
+    lit(9), 
+    lit(11), 
+    lit(13), 
+    lit(15), 
+    lit(17),
+    lit(19),
+    lit(21),
+    lit(23),
+    lit(25),
+    lit(27),
+    lit(29),
+    lit(31),
+    lit(33),
+    lit(21),
+    lit(23),
+    lit(25),
+    lit(27),
+    lit(29),
+    lit(31),
+    lit(33),
+    lit(21),
+    lit(23),
+    lit(25),
+    lit(27),
+    lit(29),
+    lit(31),
+    lit(33),
+    lit(21),
+    lit(23),
+    lit(25),
+    lit(27),
+    lit(29),
+    lit(31),
+    lit(33),
+  ]);
+
+  let input = [3, 1, 9, 11, 27, 2];
+
+  assert_eq!(p.repeat().parse(&input), Ok((vec![3, 1, 9, 11, 27], &input[5..])));
+
+}
