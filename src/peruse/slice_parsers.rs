@@ -44,6 +44,7 @@ pub trait ParserCombinator : SliceParser + Clone {
     OrParser{first: self.clone(), second: p}
   }
 
+
 }
 
 pub type ParseResult<I,O> = Result<(O, I), String>;
@@ -73,6 +74,10 @@ pub fn repsep<I: ?Sized, A: SliceParser<I=I>, B: SliceParser<I=I>>(rep: A, sep: 
 
 pub fn one_of<T: SliceParser>(t: Vec<T>) -> OneOfParser<T> {
   OneOfParser{options: t}
+}
+
+pub fn boxed<I: ?Sized,O>(b: Box<SliceParser<I=I, O=O>>) -> BoxedParser<I,O> {
+  BoxedParser{parser: Rc::new(b)}
 }
 
 
