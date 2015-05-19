@@ -370,3 +370,33 @@ impl<T: SliceParser> SliceParser for OneOfParser<T> {
 }
 
 impl<T: ParserCombinator> ParserCombinator for OneOfParser<T> {}
+
+
+/// this parser solely exists to avoid insanely long compile times in rustc.
+/// When you have a fairly large parser, it's best to box it.  Yes we're
+/// introducing extra dynamic dispatch, but only on a small amount.  In some
+/// cases this is the only way to get rustc to not take (literally) a million
+/// years!
+pub struct BoxedParser<I:?Sized,O> {
+  parser: Rc<Box<SliceParser<I=I,O=O>>>
+}
+
+impl<I:?Sized, O> SliceParser for BoxedParser<I, O> {
+
+  type I = I;
+  type O = O;
+
+  fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
+    self.parser.parse(data)
+  }
+
+}
+
+impl<I:?Sized, O> ParserCombinator for BoxedParser<I, O>  {}
+
+impl<I: ?Sized, O> Clone for BoxedParser<I, O>  {
+  fn clone(&self) -> Self {
+    BoxedParser{parser: self.parser.clone()}
+  }
+}
+  
