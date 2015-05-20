@@ -245,6 +245,8 @@ impl<P: SliceParser> SliceParser for OptionParser<P> {
   }
 }
 
+impl<P: ParserCombinator> ParserCombinator for OptionParser<P> {}
+
 pub struct RecursiveParser<I: ?Sized, O, F> where F: Fn() -> Box<SliceParser<I=I,O=O>>{
   parser: Rc<F>
 }
