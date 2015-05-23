@@ -79,7 +79,8 @@ println!("{:?}",count_zeros().parse(&[0,0,0,0,0,1]));
 //Ok((5, []))
 ```
 
-## Building
+The included [tests](https://github.com/DanSimon/peruse/blob/master/src/peruse/slice_parser_tests.rs) give basic examples of all the existing parsers as well as some more complicated examples.
 
-I am building against the Rust nightlies until 1.0 hits.
+
+For a more real-world example, checkout [Coki](https://github.com/DanSimon/coki), a very simple programming language I'm working on.  Peruse is used for both the lexer and AST parser.
 
