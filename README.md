@@ -69,13 +69,13 @@ println!("{:?}", p4.parse(&arr));
 //Ok((3, []))
 
 //lastly we can define a recursive parser in a static function
-fn recurse() -> Box<SliceParser<I=i32, O=i32>> {
+fn count_zeros() -> Box<SliceParser<I=i32, O=i32>> {
   let end = lit(1).map(|_| 0);
-  let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
+  let rec = lit(0).then_r(recursive(count_zeros)).map(|t| t + 1);
   Box::new(end.or(rec))
 }
 
-println!("{:?}",recurse().parse(&[0,0,0,0,0,1]));
+println!("{:?}",count_zeros().parse(&[0,0,0,0,0,1]));
 //Ok((5, []))
 ```
 
