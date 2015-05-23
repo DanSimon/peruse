@@ -1,7 +1,7 @@
 [package]
 
 name = "peruse"
-version = "0.2.0"
+version = "0.3.0"
 authors = [ "Dan Simon <dan@dansimon.info>" ]
 
 description = "A small parser combinator library"
