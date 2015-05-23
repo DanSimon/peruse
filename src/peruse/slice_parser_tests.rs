@@ -1,3 +1,4 @@
+use parsers::*;
 use slice_parsers::*;
 
 #[test]
@@ -53,7 +54,7 @@ fn test_or() {
 
 #[test]
 fn test_recursive() {
-  fn recurse() -> Box<SliceParser<I=[i32], O=i32>> {
+  fn recurse() -> Box<Parser<I=[i32], O=i32>> {
     let end = lit(1).map(|_| 0);
     let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
     Box::new(end.or(rec))
@@ -124,7 +125,7 @@ println!("{:?}", p4.parse(&arr));
 //Ok((3, []))
 
 //lastly we can define a recursive parser in a static function
-fn recurse() -> Box<SliceParser<I=[i32], O=i32>> {
+fn recurse() -> Box<SliceParser<i32, i32>> {
   let end = lit(1).map(|_| 0);
   let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
   Box::new(end.or(rec))
@@ -175,7 +176,7 @@ fn basic_example() {
   }
 
 
-  fn expression() -> Box<SliceParser<I=[Token], O=Expression>> {
+  fn expression() -> Box<Parser<I=[Token], O=Expression>> {
 
     let paren = lit(Token::OpenParen).then_r(recursive(|| expression())).then_l(lit(Token::CloseParen));
 

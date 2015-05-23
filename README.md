@@ -26,7 +26,14 @@ Peruse contains 2 types of parsers
 
 ## Examples
 
+### Slice Parsers
+
+A slice parser expects as input a slice of some type T.  Parsers consume one or
+more elements at the beginnng of the slice and return an output value along
+with the rest of the slice.
+
 ```rust
+use peruse::*;
 use peruse::slice_parsers::*;
 
 //let's start with something simple, a parser that looks for one particular
@@ -69,9 +76,9 @@ println!("{:?}", p4.parse(&arr));
 //Ok((3, []))
 
 //lastly we can define a recursive parser in a static function
-fn count_zeros() -> Box<SliceParser<I=i32, O=i32>> {
+fn recurse() -> Box<SliceParser<i32, i32>> {
   let end = lit(1).map(|_| 0);
-  let rec = lit(0).then_r(recursive(count_zeros)).map(|t| t + 1);
+  let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
   Box::new(end.or(rec))
 }
 
@@ -79,8 +86,40 @@ println!("{:?}",count_zeros().parse(&[0,0,0,0,0,1]));
 //Ok((5, []))
 ```
 
-The included [tests](https://github.com/DanSimon/peruse/blob/master/src/peruse/slice_parser_tests.rs) give basic examples of all the existing parsers as well as some more complicated examples.
+The included
+[tests](https://github.com/DanSimon/peruse/blob/master/src/peruse/slice_parser_tests.rs)
+give basic examples of all the existing parsers as well as some more
+complicated examples.
 
 
-For a more real-world example, checkout [Coki](https://github.com/DanSimon/coki), a very simple programming language I'm working on.  Peruse is used for both the lexer and AST parser.
+For a more real-world example, checkout
+[Coki](https://github.com/DanSimon/coki), a very simple programming language
+I'm working on.  Peruse is used for both the lexer and AST parser.
 
+## Other Notes
+
+In most cases, constructed parsers use static dispath whenever possible.  My
+end goal is static dispatch everywhere, still working on it.
+
+Be aware, due to an ongoing [issue with
+rustc](https://github.com/rust-lang/rust/issues/22204), the compile time of
+your code will exponentially increase with the complexity of your parsers.  In
+practice I've found things get bad after about 10 combinations or so.  You can
+get around this by boxing a parser:
+
+```rust
+let parser = lit(1).or(lit(2)).or(lit(3)).repeat().then(opt(lit(4).then(lit(5))));
+let boxed = boxed(parser);  //creates a BoxedParser
+let full_parser = boxed.or(lit(3));
+```
+
+This "flattens" the type signature of the parser into a trait object, which
+will improve compile-time at the cost of runtime performance due to dynamic
+dispath.  But in most cases since you're only doing this on like 1/10th of your
+parsing, the performance hit shouldn't be that bad (in theory, I haven't tested
+any of this yet).
+
+
+Right now slice parsers cannot return pointers to the input data.  Trying to figure
+out if this will be possible but I think we'll need to wait for higher-kinded
+types.  The soon-to-be implemented StreamParsers may allow for this.

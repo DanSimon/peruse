@@ -1,4 +1,4 @@
-use slice_parsers::*;
+use parsers::*;
 use string_parsers::*;
 use std::str::FromStr;
 

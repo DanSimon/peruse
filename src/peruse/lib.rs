@@ -1,6 +1,7 @@
 extern crate regex;
 
 
+pub mod parsers;
 pub mod slice_parsers;
 pub mod string_parsers;
 

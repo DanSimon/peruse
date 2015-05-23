@@ -1,8 +1,10 @@
 
 
-use slice_parsers::*;
+use parsers::{Parser, ParserCombinator, ParseResult};
 use regex::{Captures, Regex};
 use std::rc::Rc;
+
+pub type StringParser<T> = Parser<I=str, O=T>;
     
 /// A string Parser that attempts to consume the given regex
 #[derive(Clone)]
@@ -11,7 +13,7 @@ pub struct RegexLiteralParser<T: Clone> {
   literal: T,
 }
 
-impl<T: Clone> SliceParser for RegexLiteralParser<T> {
+impl<T: Clone> Parser for RegexLiteralParser<T> {
   type I = str;
   type O = T;
 
@@ -28,7 +30,7 @@ pub struct RegexCapturesParser<T, F: Fn(Captures) -> T> {
   f: Rc<Box<F>>
 }
 
-impl<T, F: Fn(Captures) -> T> SliceParser for RegexCapturesParser<T, F> {
+impl<T, F: Fn(Captures) -> T> Parser for RegexCapturesParser<T, F> {
 
   type I = str;
   type O = T;
