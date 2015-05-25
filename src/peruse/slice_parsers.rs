@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::marker::PhantomData;
 use parsers::{Parser, ParserCombinator, ParseResult};
 
 pub type SliceParser<I,O> = Parser<I=[I], O=O>;
@@ -8,8 +9,8 @@ pub fn lit<T: Eq + Clone>(l: T) -> LiteralParser<T> {
   LiteralParser{literal: l}
 }
 
-pub fn matcher<T: Clone, U, F: 'static + Fn(T) -> Option<U>>(f: F) -> MatchParser<T, U> {
-  MatchParser{matcher: Rc::new(Box::new(f))}
+pub fn matcher<T: Clone, U, F: 'static + Fn(T) -> Option<U>>(f: F) -> MatchParser<T, U, F> {
+  MatchParser{matcher: Rc::new(f), _marker: PhantomData}
 }
 
 
@@ -45,11 +46,12 @@ impl<T: Eq + Clone> ParserCombinator for LiteralParser<T>{}
 
 
 
-pub struct MatchParser<T: Clone, U> {
-  matcher: Rc<Box<Fn(T) -> Option<U>>>
+pub struct MatchParser<T: Clone, U, F: Fn(T) -> Option<U>> {
+  matcher: Rc<F>,
+  _marker: PhantomData<T>
 }
 
-impl<T: Clone, U> Parser for MatchParser<T,U> {
+impl<T: Clone, U, F: Fn(T) -> Option<U>> Parser for MatchParser<T,U, F> {
   type I = [T];
   type O = U;
 
@@ -65,12 +67,12 @@ impl<T: Clone, U> Parser for MatchParser<T,U> {
 }
 
 
-impl<T: Clone, U> ParserCombinator for MatchParser<T,U> {}
+impl<T: Clone, U, F: Fn(T) -> Option<U>> ParserCombinator for MatchParser<T,U, F> {}
 
-impl<T: Clone, U> Clone for MatchParser<T,U> {
+impl<T: Clone, U, F: Fn(T) -> Option<U>> Clone for MatchParser<T,U, F> {
 
   fn clone(&self) -> Self {
-    MatchParser{matcher: self.matcher.clone()}
+    MatchParser{matcher: self.matcher.clone(), _marker: PhantomData}
   }
 
 }
