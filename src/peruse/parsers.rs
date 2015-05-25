@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+
 /////////     TRAITS/TYPES       //////////
 
 /// A Parser is a parser that parses some elements out of the beginning of
@@ -49,11 +50,34 @@ pub trait ParserCombinator : Parser + Clone {
 
 }
 
+/// The result of a parser's attempt to parse input data.  A successful result
+/// contains the output value of the parser along with a new input value that can
+/// be consumed by subsequent parsers.  A failed result contains an error
+/// message.
 pub type ParseResult<I,O> = Result<(O, I), String>;
 
 /////////     FUNCTIONS     ///////////
 
 /// Create a parser that will return Some if the given parser is successful, None otherwise
+///
+/// # Examples
+/// This parser will simply return a failure
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let input = ["a", "b" , "c"];
+/// let parser = lit("d");
+/// parser.parse(&input); //Err
+/// ```
+/// But this will be return an `Ok((None, ...))`
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let input = ["a", "b" , "c"];
+/// let parser = opt(lit("d"));
+/// parser.parse(&input); //Ok
+/// ```
+///
 pub fn opt<T: Parser>(t: T) -> OptionParser<T> {
   OptionParser{parser: t}
 }
@@ -63,17 +87,76 @@ pub fn recursive<I:?Sized,O, F:  Fn() -> Box<Parser<I=I,O=O>>>(f: F) -> Recursiv
   RecursiveParser{parser: Rc::new(f)}
 }
 
-
+/// Create a parser that will repeatedly use the `rep` and `sep` parsers in
+/// sequence, building a vector of results from `rep`.  This will repeat until
+/// `sep` returns an error.  If at any point `rep` returns an error, the collected
+/// values are discarded and the error is escelated.
+///
+/// # Examples
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let input = [0,1,0,1,0,4];
+/// let parser = repsep(lit(0), lit(1));
+/// let res = parser.parse(&input);
+/// // Ok((Vec[0,0,0], [4]))
+///
+/// let bad_input = [0,1,0,1,2,1];
+/// let res2 = parser.parse(&bad_input);
+/// // Err
+/// ```
 pub fn repsep<I: ?Sized, A: Parser<I=I>, B: Parser<I=I>>(rep: A, sep: B) -> RepSepParser<A,B> {
   RepSepParser{rep: rep, sep: sep, min_reps: 1}
 }
 
+/// Create a parser that attempts to use each of the given parsers until one succeeds.  If all the
+/// given parses are literally the exact same type, they can be unboxed, otherwise you'll have to
+/// box them using the `boxed` function.
+///
+/// # Examples
+/// 
+/// Here both parsers have the same structure, and can be used unboxed
+///
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let input = [2,3,4];
+/// let p1 = lit(2);
+/// let p2 = lit(3);
+/// let parser = one_of(vec![p1, p2]);
+/// parser.parse(&input);
+/// ```
+/// 
+/// These parsers have different structure, thus different types, so they need to be boxed to be
+/// used.
+///
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let input = [2, 3, 4];
+/// let p1 = lit(2).then(lit(3)).map(|(a, b)| a * b);
+/// let p2 = lit(4);
+/// let parser = one_of(vec![boxed(p1), boxed(p2)]);
+/// parser.parse(&input);
+/// ```
+///
 pub fn one_of<T: Parser>(t: Vec<T>) -> OneOfParser<T> {
   OneOfParser{options: t}
 }
 
-pub fn boxed<I: ?Sized,O>(b: Box<Parser<I=I, O=O>>) -> BoxedParser<I,O> {
-  BoxedParser{parser: Rc::new(b)}
+/// Wrap a boxed parser.  This mostly exists to avoid slow compile times.  Boxing a complex parser into a
+/// trait object keep compile times down as the boxed parser is combined with other parsers
+///
+/// # Examples
+/// ```no_run
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let p1 = lit(1).or(lit(2)).or(lit(3)).or(lit(4)).or(lit(5)).or(lit(6));
+/// let p2 = lit(7).or(lit(8)).or(lit(9)).or(lit(10)).or(lit(11)).or(lit(12));
+/// let p3 = boxed(p1).or(boxed(p2));
+/// ```
+pub fn boxed<I: ?Sized,O, P:'static + Parser<I=I, O=O> >(p: P) -> BoxedParser<I,O> {
+  BoxedParser{parser: Rc::new(Box::new(p))}
 }
 
 
