@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `parsers` mod in crate `peruse`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, parsers">
+
+    <title>peruse::parsers - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='../index.html'>peruse</a></p><script>window.sidebarCurrent = {name: 'parsers', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>peruse</a>::<wbr><a class='mod' href=''>parsers</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-5' class='srclink' href='../../src/peruse/parsers.rs.html#1-449' title='goto source code'>[src]</a></span></h1>
+<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.BoxedParser.html'
+                               title='peruse::parsers::BoxedParser'>BoxedParser</a></td>
+                        <td class='docblock short'>
+                             <p>this parser solely exists to avoid insanely long compile times in rustc.
+When you have a fairly large parser, it&#39;s best to box it.  Yes we&#39;re
+introducing extra dynamic dispatch, but only on a small amount.  In some
+cases this is the only way to get rustc to not take (literally) a million
+years!</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ChainedParser.html'
+                               title='peruse::parsers::ChainedParser'>ChainedParser</a></td>
+                        <td class='docblock short'>
+                             <p>A Chained parser contains two parsers that will be used in sequence to
+create a tuple of parsed values</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MapParser.html'
+                               title='peruse::parsers::MapParser'>MapParser</a></td>
+                        <td class='docblock short'>
+                             <p>A Parser that uses a closure to map the result of another parser</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OneOfParser.html'
+                               title='peruse::parsers::OneOfParser'>OneOfParser</a></td>
+                        <td class='docblock short'>
+                             <p>A Parser that takes a vector of parsers (of the exact same type) and
+returns the value from the first parser to return a non-error.  This parser
+solely exists because doing a or b or c or d... ends up crushing rustc</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OptionParser.html'
+                               title='peruse::parsers::OptionParser'>OptionParser</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OrParser.html'
+                               title='peruse::parsers::OrParser'>OrParser</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RecursiveParser.html'
+                               title='peruse::parsers::RecursiveParser'>RecursiveParser</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RepSepParser.html'
+                               title='peruse::parsers::RepSepParser'>RepSepParser</a></td>
+                        <td class='docblock short'>
+                             <p>A Parser that will repeatedly parse <code>rep</code> and <code>sep</code> in sequence until <code>sep</code>
+returns an error.  The accumulated <code>rep</code> results are returned.  If <code>rep</code>
+returns an error at any time, the error is escelated.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RepeatParser.html'
+                               title='peruse::parsers::RepeatParser'>RepeatParser</a></td>
+                        <td class='docblock short'>
+                             <p>A Parser that repeats the given parser until it encounters an error.  A
+vector of the accumulated parsed values is returned</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.Parser.html'
+                               title='peruse::parsers::Parser'>Parser</a></td>
+                        <td class='docblock short'>
+                             <p>The base trait for any parser.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.ParserCombinator.html'
+                               title='peruse::parsers::ParserCombinator'>ParserCombinator</a></td>
+                        <td class='docblock short'>
+                             <p>Combinator methods for slice parsers.  In most cases, these methods copy
+the caller into a higher-order parser</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.boxed.html'
+                               title='peruse::parsers::boxed'>boxed</a></td>
+                        <td class='docblock short'>
+                             <p>Wrap a boxed parser.  This mostly exists to avoid slow compile times.  Boxing a complex parser into a
+trait object keep compile times down as the boxed parser is combined with other parsers</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.one_of.html'
+                               title='peruse::parsers::one_of'>one_of</a></td>
+                        <td class='docblock short'>
+                             <p>Create a parser that attempts to use each of the given parsers until one succeeds.  If all the
+given parses are literally the exact same type, they can be unboxed, otherwise you&#39;ll have to
+box them using the <code>boxed</code> function.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.opt.html'
+                               title='peruse::parsers::opt'>opt</a></td>
+                        <td class='docblock short'>
+                             <p>Create a parser that will return Some if the given parser is successful, None otherwise</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.recursive.html'
+                               title='peruse::parsers::recursive'>recursive</a></td>
+                        <td class='docblock short'>
+                             <p>Create a lazily evaluated parser from a function.  This can be used to generate recursive parsers</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.repsep.html'
+                               title='peruse::parsers::repsep'>repsep</a></td>
+                        <td class='docblock short'>
+                             <p>Create a parser that will repeatedly use the <code>rep</code> and <code>sep</code> parsers in
+sequence, building a vector of results from <code>rep</code>.  This will repeat until
+<code>sep</code> returns an error.  If at any point <code>rep</code> returns an error, the collected
+values are discarded and the error is escelated.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.ParseResult.html'
+                               title='peruse::parsers::ParseResult'>ParseResult</a></td>
+                        <td class='docblock short'>
+                             <p>The result of a parser&#39;s attempt to parse input data.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "peruse";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>
