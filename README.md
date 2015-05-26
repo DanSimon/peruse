@@ -4,6 +4,8 @@
 
 [![Crates.io](https://img.shields.io/crates/v/peruse.svg)](https://crates.io/crates/peruse)
 
+[Documentation](http://dansimon.github.io/peruse/peruse/)
+
 Peruse is a small parser-combinator library for rust.  The goal is to be able
 to write clean, efficient parsers powerful enough to handle most grammars.
 This project is my first foray into rust and is very much a work-in-progress.
