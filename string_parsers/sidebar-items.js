@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["capture",""],["rlit",""],["str_lit",""]],"struct":[["RegexCapturesParser",""],["RegexLiteralParser","A string Parser that attempts to consume the given regex"]],"type":[["StringParser",""]]});
