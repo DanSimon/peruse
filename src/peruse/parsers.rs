@@ -3,12 +3,12 @@ use std::rc::Rc;
 
 /////////     TRAITS/TYPES       //////////
 
-/// A Parser is a parser that parses some elements out of the beginning of
-/// a slice and returns a parsed value along with the rest of the unparsed slice
+/// The base trait for any parser.  
 pub trait Parser  {
   type I: ?Sized;
   type O;
 
+  /// Attempt to parse an input value into an output value
   fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O>;
 }
 
@@ -50,10 +50,10 @@ pub trait ParserCombinator : Parser + Clone {
 
 }
 
-/// The result of a parser's attempt to parse input data.  A successful result
-/// contains the output value of the parser along with a new input value that can
-/// be consumed by subsequent parsers.  A failed result contains an error
-/// message.
+/// The result of a parser's attempt to parse input data.  
+///
+/// A successful result contains the output value of the parser along with a new input value that
+/// can be consumed by subsequent parsers.  A failed result contains an error message.
 pub type ParseResult<I,O> = Result<(O, I), String>;
 
 /////////     FUNCTIONS     ///////////
@@ -83,6 +83,22 @@ pub fn opt<T: Parser>(t: T) -> OptionParser<T> {
 }
 
 /// Create a lazily evaluated parser from a function.  This can be used to generate recursive parsers
+///
+/// # Examples
+///
+/// ```
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// 
+/// fn recurse() -> Box<Parser<I=[i32], O=i32>> {
+///   let end = lit(1).map(|_| 0);
+///   let rec = lit(0).then_r(recursive(|| recurse())).map(|t| t + 1);
+///   Box::new(end.or(rec))
+/// }
+/// let input = [0,0,0,1, 2];
+/// # assert_eq!(recurse().parse(&input), Ok((3, &input[4..])));
+/// ```
+///
 pub fn recursive<I:?Sized,O, F:  Fn() -> Box<Parser<I=I,O=O>>>(f: F) -> RecursiveParser<I,O,F> {
   RecursiveParser{parser: Rc::new(f)}
 }
