@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["parsers",""],["slice_parsers","Slice parsers are parsers designed to work with slices of items.  These parsers work by consuming one or more elements off the beginning of the slice, converting them into an output type, and return the output value along with the rest of the slice."],["string_parsers",""]]});
