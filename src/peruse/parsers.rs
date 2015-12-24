@@ -22,12 +22,12 @@ pub trait ParserCombinator : Parser + Clone {
     ChainedParser{first: self.clone(), second: p}
   }
 
-  /// Chain this parser with another parser, but toss the value from this parser
+  /// Chain this parser with another parser, but return only the value from this parser
   fn then_r<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<Self::I, ChainedParser<Self, P>, P::O> {
     self.then(p).map(|(_, t)| t)
   }
 
-  /// Chain this parser with another parser, but toss the value from the other parser
+  /// Chain this parser with another parser, but return only the value from the previous parser
   fn then_l<P: ParserCombinator<I=Self::I>>(&self, p: P) -> MapParser<Self::I, ChainedParser<Self, P>, Self::O> {
     self.then(p).map(|(t, _)| t)
   }
