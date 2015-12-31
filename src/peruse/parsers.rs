@@ -175,6 +175,25 @@ pub fn boxed<I: ?Sized,O, P:'static + Parser<I=I, O=O> >(p: P) -> BoxedParser<I,
   BoxedParser{parser: Rc::new(Box::new(p))}
 }
 
+/// Create a parser that can skip certain elements.    
+/// This parser will try to skip as much as possible of `to_skip` elements, then match `to_keep` elements 
+/// and then again skip as much as possible of `to_skip` elements.
+///
+/// #Examples
+/// ```
+/// # use peruse::parsers::*;
+/// # use peruse::slice_parsers::lit;
+/// let keep = one_of(vec![lit(3), lit(4)]);
+/// let skip = one_of(vec![lit(1), lit(2)]);
+/// let parser = keep_skip(keep, skip).repeat();
+/// let input = [1, 4, 2, 1, 4, 4, 3, 1, 5];
+/// assert_eq!(parser.parse(&input), Ok((vec![4, 4, 4, 3], &input[8..])));
+/// //Ok(([4, 4, 4, 3], [5])) 
+/// ```
+pub fn keep_skip<I: ?Sized,O, P: ParserCombinator<I=I, O=O>, S: ParserCombinator<I=I>>(to_keep: P, to_skip: S) 
+  -> SkippingParser<I, O, P, S>{
+    SkippingParser{to_keep: to_keep, to_skip: to_skip}
+}
 
 ////////////    STRUCTS     //////////////
 
@@ -446,4 +465,32 @@ impl<I: ?Sized, O> Clone for BoxedParser<I, O>  {
   fn clone(&self) -> Self {
     BoxedParser{parser: self.parser.clone()}
   }
+}
+
+/// This is a parser returned by `keep_skip()` function.
+pub struct SkippingParser<I: ?Sized, O, P: ParserCombinator<I=I, O=O>, S: ParserCombinator<I=I>>{
+    to_keep: P,
+    to_skip: S
+}
+
+impl<I: ?Sized, O, P: ParserCombinator<I=I, O=O>, S: ParserCombinator<I=I>> Parser for SkippingParser<I, O, P, S>{
+    
+    type I = I;
+    type O = O;
+
+    fn parse<'a>(&self, data: &'a Self::I) -> ParseResult<&'a Self::I, Self::O> {
+        let skipped_repeated = self.to_skip.repeat();
+        //skips as much of to_skip elements until an other element is not met
+        //then tries to match with a given to_keep parser
+        //and then again skips as much as possible of to_skip elements
+        skipped_repeated.clone().then_r(self.to_keep.clone()).then_l(skipped_repeated).parse(data)
+    }
+}
+
+impl<I: ?Sized, O, P: ParserCombinator<I=I, O=O>, S: ParserCombinator<I=I>> ParserCombinator for SkippingParser<I, O, P, S>{}
+
+impl<I: ?Sized, O, P: ParserCombinator<I=I, O=O>, S: ParserCombinator<I=I>> Clone for SkippingParser<I, O, P, S>{
+    fn clone(&self) -> Self {
+        SkippingParser{to_keep: self.to_keep.clone(), to_skip: self.to_skip.clone()}
+    }
 }
